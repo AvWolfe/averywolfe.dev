@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enemy AI traits — At Great Cost</title>
+<meta name="description" content="The 31 traits that reweight enemy decision-making in At Great Cost.">
+<style>
+  :root {
+    --void:#050810; --panel:#0b1020; --line:#1b2338;
+    --fg:#dfe4ee; --muted:#7c88a4;
+    --amber:#cc8033; --blue:#4a8cff; --red:#ff3359; --violet:#9b6bd8;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--void); color:var(--fg); font:16px/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
+  body::after {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:100;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.016) 0 1px, transparent 1px 3px);
+  }
+  @media (prefers-reduced-motion: reduce) { body::after { display:none; } }
+
+  .wrap { max-width:62rem; margin:0 auto; padding:0 1.5rem; }
+  a { color:var(--amber); text-underline-offset:3px; }
+  a:hover { color:#e8a05c; }
+
+  header { padding:4rem 0 2.5rem; border-bottom:1px solid var(--line); }
+  .back { font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; }
+  h1 { font-size:clamp(2rem,5vw,3rem); letter-spacing:-.03em; margin:1.2rem 0 .8rem; font-weight:700; }
+  .lede { max-width:42rem; color:var(--fg); font-size:1.05rem; margin:0 0 1rem; }
+  .lede + .lede { color:var(--muted); }
+  code {
+    font-family:var(--mono); font-size:.85em; background:var(--panel);
+    border:1px solid var(--line); padding:.08em .35em; border-radius:2px;
+  }
+
+  section { padding:3.5rem 0; border-bottom:1px solid var(--line); }
+  section:last-of-type { border-bottom:0; }
+  h2 {
+    font-size:.78rem; text-transform:uppercase; letter-spacing:.16em;
+    font-family:var(--mono); color:var(--muted); font-weight:600;
+    margin:0 0 .35rem; display:flex; align-items:center; gap:.6rem;
+  }
+  .count {
+    font-size:.68rem; color:var(--void); background:var(--muted);
+    border-radius:10px; padding:.05rem .45rem; letter-spacing:.04em;
+  }
+  .blurb { color:var(--muted); margin:0 0 1.6rem; font-size:.95rem; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr)); gap:.9rem; margin:0; }
+  .trait {
+    background:var(--panel); border:1px solid var(--line);
+    border-left:2px solid var(--muted); border-radius:2px; padding:.85rem 1rem;
+  }
+  .trait.hot  { border-left-color:var(--red); }
+  .trait.cool { border-left-color:var(--blue); }
+  .trait.odd  { border-left-color:var(--violet); }
+
+  dt { font-weight:650; margin:0 0 .3rem; display:flex; align-items:baseline; gap:.5rem; flex-wrap:wrap; }
+  dt code { font-size:.68rem; color:var(--muted); font-weight:400; }
+  dd { margin:0; color:var(--muted); font-size:.9rem; line-height:1.55; }
+
+  footer {
+    padding:2.5rem 0 4rem; color:var(--muted);
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.08em;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="back" href="/">&larr; At Great Cost</a>
+    <h1>Enemy AI traits</h1>
+    <p class="lede">
+      Every unit in the game runs the same planner. It scores the moves available to it, the lines of sight
+      those moves open or close, and the abilities it could spend energy on, then takes the best option and
+      repeats until the turn is done.
+    </p>
+    <p class="lede">
+      Traits don't add special cases to that loop. They change the weights inside it — how much a kill is
+      worth, how badly it wants to stay unseen, what it will pay to close distance. Two units with different
+      traits read an identical board and come to opposite conclusions, which is the whole point: an encounter
+      should not feel like one enemy copy-pasted.
+    </p>
+    <p class="lede">
+      There are <strong>31</strong> at present, grouped below. This page is generated from
+      <code>AiTraitRegistry.cs</code>, so it matches what is actually in the build.
+    </p>
+  </header>
+
+  <section>
+    <h2>Aggression <span class="count">6</span></h2>
+    <p class="blurb">How much risk it will eat to land damage.</p>
+    <dl class="grid">
+      <div class="trait hot">
+        <dt>Reckless <code>Reckless</code></dt>
+        <dd>Takes high-risk actions, low regard for survival</dd>
+      </div>
+      <div class="trait hot">
+        <dt>Suicidal Revenge <code>SuicidalRevenge</code></dt>
+        <dd>Will kill self to take someone down</dd>
+      </div>
+      <div class="trait hot">
+        <dt>Aggressive <code>Aggressive</code></dt>
+        <dd>Prioritizes high-damage options, likes close range</dd>
+      </div>
+      <div class="trait hot">
+        <dt>Bloodthirsty <code>Bloodthirsty</code></dt>
+        <dd>Will focus on finishing off wounded targets</dd>
+      </div>
+      <div class="trait hot">
+        <dt>Berserker <code>Berserker</code></dt>
+        <dd>Prioritizes nearest or most hated enemy regardless of tact</dd>
+      </div>
+      <div class="trait hot">
+        <dt>Finisher <code>Finisher</code></dt>
+        <dd>Only motivated by securing kills</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Caution <span class="count">3</span></h2>
+    <p class="blurb">What it does when the odds turn.</p>
+    <dl class="grid">
+      <div class="trait cool">
+        <dt>Cautious <code>Cautious</code></dt>
+        <dd>Values cover and positioning</dd>
+      </div>
+      <div class="trait cool">
+        <dt>Cowardly <code>Cowardly</code></dt>
+        <dd>Will flee or hide if outnumbered or injured</dd>
+      </div>
+      <div class="trait cool">
+        <dt>Self Preserving <code>SelfPreserving</code></dt>
+        <dd>Avoids danger, prefers using shields</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Target Selection <span class="count">6</span></h2>
+    <p class="blurb">Who it decides is worth shooting.</p>
+    <dl class="grid">
+      <div class="trait ">
+        <dt>Opportunistic <code>Opportunistic</code></dt>
+        <dd>Attacks the weakest or most isolated enemy</dd>
+      </div>
+      <div class="trait ">
+        <dt>Holds Grudge <code>HoldsGrudge</code></dt>
+        <dd>Prioritizes players that hurt them</dd>
+      </div>
+      <div class="trait ">
+        <dt>Prioritizes Drones <code>PrioritizesDrones</code></dt>
+        <dd>Focuses on taking out player&#x27;s support</dd>
+      </div>
+      <div class="trait ">
+        <dt>Prioritizes Humans <code>PrioritizesHumans</code></dt>
+        <dd>Targets human characters over fauna or drones</dd>
+      </div>
+      <div class="trait ">
+        <dt>Ignores Wildlife <code>IgnoresWildlife</code></dt>
+        <dd>Will not waste actions on non-humans</dd>
+      </div>
+      <div class="trait ">
+        <dt>Prefers High Value Targets <code>PrefersHighValueTargets</code></dt>
+        <dd>Targets those with strongest abilities</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Psychology <span class="count">5</span></h2>
+    <p class="blurb">The ones that make a unit unreliable.</p>
+    <dl class="grid">
+      <div class="trait odd">
+        <dt>Emotional <code>Emotional</code></dt>
+        <dd>May act irrationally if angry or hurt</dd>
+      </div>
+      <div class="trait odd">
+        <dt>Paranoid <code>Paranoid</code></dt>
+        <dd>May attack allies if confused or alone</dd>
+      </div>
+      <div class="trait odd">
+        <dt>Loyal <code>Loyal</code></dt>
+        <dd>Will defend allies or protect a leader</dd>
+      </div>
+      <div class="trait odd">
+        <dt>Sadistic <code>Sadistic</code></dt>
+        <dd>Targets weakest player, uses high-damage attacks to overkill</dd>
+      </div>
+      <div class="trait odd">
+        <dt>Pacifist <code>Pacifist</code></dt>
+        <dd>Avoids fighting unless forced</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Tactical <span class="count">4</span></h2>
+    <p class="blurb">Preferred shape of a fight.</p>
+    <dl class="grid">
+      <div class="trait ">
+        <dt>Prefers Cover <code>PrefersCover</code></dt>
+        <dd>Always moves to cover when possible</dd>
+      </div>
+      <div class="trait ">
+        <dt>Prefers Melee <code>PrefersMelee</code></dt>
+        <dd>Chooses melee attacks over ranged</dd>
+      </div>
+      <div class="trait ">
+        <dt>Prefers Ranged <code>PrefersRanged</code></dt>
+        <dd>Avoids close range</dd>
+      </div>
+      <div class="trait ">
+        <dt>Methodical <code>Methodical</code></dt>
+        <dd>Maximizes damage per energy, takes no unnecessary risk</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Movement <span class="count">3</span></h2>
+    <p class="blurb">How willing it is to give up its position.</p>
+    <dl class="grid">
+      <div class="trait ">
+        <dt>Mobile <code>Mobile</code></dt>
+        <dd>Takes advantage of high movement or repositioning</dd>
+      </div>
+      <div class="trait ">
+        <dt>Stationary <code>Stationary</code></dt>
+        <dd>Avoids moving unless necessary</dd>
+      </div>
+      <div class="trait ">
+        <dt>Ambusher <code>Ambusher</code></dt>
+        <dd>Hides and waits, then strikes when player moves into range</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Special <span class="count">4</span></h2>
+    <p class="blurb">Situational and story-driven states.</p>
+    <dl class="grid">
+      <div class="trait odd">
+        <dt>Drugged <code>Drugged</code></dt>
+        <dd>Ignores pain or logic, may behave erratically</dd>
+      </div>
+      <div class="trait odd">
+        <dt>Hallucinating <code>Hallucinating</code></dt>
+        <dd>May attack random units or behave unpredictably</dd>
+      </div>
+      <div class="trait odd">
+        <dt>Pack Hunter <code>PackHunter</code></dt>
+        <dd>Gets more aggressive when allies are nearby</dd>
+      </div>
+      <div class="trait odd">
+        <dt>Wasteful <code>Wasteful</code></dt>
+        <dd>Spends energy freely with little regard for return</dd>
+      </div>
+    </dl>
+  </section>
+
+  <footer>At Great Cost — alpha. Traits are still being added and tuned.</footer>
+</div>
+
+</body>
+</html>

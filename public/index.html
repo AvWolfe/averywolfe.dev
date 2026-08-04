@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>At Great Cost — a turn-based tactics game</title>
+<meta name="description" content="At Great Cost: a turn-based tactics game in Godot 4 and C# by Avery Wolfe and Brian Tambascio. Trait-driven enemy AI, deep modding, and a lot of systems work.">
+<meta property="og:title" content="At Great Cost">
+<meta property="og:description" content="A turn-based tactics game where every enemy thinks differently. Built in Godot 4 / C#.">
+<meta property="og:image" content="https://averywolfe.dev/media/hero.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  /* Palette lifted from the game's own HUD constants. */
+  :root {
+    --void:    #050810;   /* HUD backdrop, Color(0.02, 0.03, 0.05) */
+    --panel:   #0b1020;
+    --line:    #1b2338;
+    --fg:      #dfe4ee;
+    --muted:   #7c88a4;
+    --amber:   #cc8033;   /* Color(0.8, 0.5, 0.2)   */
+    --blue:    #4a8cff;   /* Color(0.25, 0.55, 1.0) */
+    --red:     #ff3359;   /* Color(1.0, 0.2, 0.35)  */
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--void);
+    color: var(--fg);
+    font: 16px/1.7 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Faint scanlines, echoing the game's CRT shader. Delete this block to remove. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.016) 0px,
+      rgba(255,255,255,0.016) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+  @media (prefers-reduced-motion: reduce) { body::after { display: none; } }
+
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
+  .narrow { max-width: 44rem; }
+
+  a { color: var(--amber); text-underline-offset: 3px; }
+  a:hover { color: #e8a05c; }
+
+  .label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative;
+    min-height: 82vh;
+    display: flex;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .hero .bg {
+    position: absolute; inset: 0;
+    background: var(--panel) center/cover no-repeat;
+  }
+  .hero .bg img, .hero .bg video {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .hero::before {
+    content: "";
+    position: absolute; inset: 0; z-index: 1;
+    background:
+      radial-gradient(120% 90% at 70% 20%, transparent 30%, rgba(5,8,16,0.75) 100%),
+      linear-gradient(to top, var(--void) 4%, rgba(5,8,16,0.55) 45%, rgba(5,8,16,0.25) 100%);
+  }
+  .hero .inner { position: relative; z-index: 2; padding: 5rem 0 4rem; width: 100%; }
+
+  .status {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--mono); font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--amber);
+    border: 1px solid rgba(204,128,51,0.35);
+    background: rgba(204,128,51,0.07);
+    padding: 0.3rem 0.7rem;
+    border-radius: 2px;
+  }
+  .status::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--amber); box-shadow: 0 0 8px var(--amber);
+  }
+
+  h1 {
+    font-size: clamp(2.6rem, 7vw, 5rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    margin: 1.1rem 0 0.8rem;
+    font-weight: 700;
+  }
+  .kicker {
+    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+    color: var(--fg);
+    max-width: 34rem;
+    margin: 0 0 1.6rem;
+  }
+  .byline { color: var(--muted); font-size: 0.95rem; margin: 0; }
+
+  /* ---------- sections ---------- */
+  section { padding: 5.5rem 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: 0; }
+
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.02em;
+    margin: 0.6rem 0 1.2rem;
+    font-weight: 650;
+  }
+  h3 { font-size: 1.15rem; margin: 0 0 0.5rem; font-weight: 650; }
+  p { margin: 0 0 1.1rem; }
+  .lede { font-size: 1.1rem; color: var(--fg); }
+  .dim { color: var(--muted); }
+
+  /* ---------- media slots ---------- */
+  .media {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+  }
+  .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* Shown only when the file isn't there yet. */
+  .media.empty::after {
+    content: attr(data-slot);
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 1rem;
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted);
+    background:
+      repeating-linear-gradient(45deg, rgba(124,136,164,0.05) 0 10px, transparent 10px 20px);
+  }
+  .media.empty img, .media.empty video { display: none; }
+
+  .shots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 1rem;
+  }
+  .caption { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.5rem; letter-spacing: 0.06em; }
+
+  /* ---------- feature rows ---------- */
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+    margin-bottom: 3.5rem;
+  }
+  .row:last-child { margin-bottom: 0; }
+  .row.flip .copy { order: 2; }
+  @media (max-width: 800px) {
+    .row, .row.flip .copy { grid-template-columns: 1fr; order: 0; }
+    .row { gap: 1.25rem; }
+  }
+
+  .traits { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.1rem; padding: 0; list-style: none; }
+  .traits li {
+    font-family: var(--mono); font-size: 0.72rem;
+    border: 1px solid var(--line); border-radius: 2px;
+    padding: 0.2rem 0.5rem; color: var(--muted);
+  }
+  .traits li.hot { color: var(--red); border-color: rgba(255,51,89,0.3); }
+  .traits li.cool { color: var(--blue); border-color: rgba(74,140,255,0.3); }
+
+  code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--panel); border: 1px solid var(--line);
+    padding: 0.08em 0.35em; border-radius: 2px;
+  }
+
+  /* ---------- about ---------- */
+  .about { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+  @media (max-width: 800px) { .about { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .links { list-style: none; padding: 0; margin: 0; }
+  .links li { margin-bottom: 0.55rem; }
+  .links span {
+    display: inline-block; width: 5rem;
+    font-family: var(--mono); font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted);
+  }
+
+  footer {
+    padding: 2.5rem 0 4rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================================
+     MEDIA: drop files into public/media/ using these names and they appear.
+       hero.jpg          wide splash behind the title (or hero.mp4, see below)
+       trailer.mp4       gameplay video   + trailer-poster.jpg as its still
+       shot-01..04.jpg   screenshot grid
+       system-ai.jpg     enemy AI section
+       system-mods.jpg   modding section
+     Anything missing shows a labelled placeholder instead of breaking.
+     ============================================================================ -->
+
+<header class="hero">
+  <div class="bg media empty" data-slot="media/hero.jpg">
+    <img src="media/hero.jpg" alt="">
+  </div>
+  <div class="inner">
+    <div class="wrap">
+      <span class="status">Alpha · in development</span>
+      <h1>At Great Cost</h1>
+      <p class="kicker">A turn-based tactics game where no two enemies think the same way.</p>
+      <p class="byline">Built in Godot 4 and C# by <a href="#about">Avery Wolfe</a> (code, gameplay design)
+        and Brian Tambascio (story, art).</p>
+    </div>
+  </div>
+</header>
+
+<section id="trailer">
+  <div class="wrap">
+    <span class="label">Gameplay</span>
+    <h2>See it move</h2>
+    <div class="media empty" data-slot="media/trailer.mp4">
+      <video controls preload="metadata" poster="media/trailer-poster.jpg">
+        <source src="media/trailer.mp4" type="video/mp4">
+      </video>
+    </div>
+    <p class="caption">Captured from the current alpha build.</p>
+  </div>
+</section>
+
+<section id="shots">
+  <div class="wrap">
+    <span class="label">Screenshots</span>
+    <h2>The field</h2>
+    <div class="shots">
+      <div class="media empty" data-slot="media/shot-01.jpg"><img src="media/shot-01.jpg" alt="Gameplay screenshot"></div>
+      <div class="media empty" data-slot="media/shot-02.jpg"><img src="media/shot-02.jpg" alt="Gameplay screenshot"></div>
+      <div class="media empty" data-slot="media/shot-03.jpg"><img src="media/shot-03.jpg" alt="Gameplay screenshot"></div>
+      <div class="media empty" data-slot="media/shot-04.jpg"><img src="media/shot-04.jpg" alt="Gameplay screenshot"></div>
+    </div>
+  </div>
+</section>
+
+<section id="systems">
+  <div class="wrap">
+    <span class="label">Under the hood</span>
+    <h2>Systems, mostly</h2>
+    <p class="lede narrow dim">
+      Roughly 74,000 lines of C# across 500 source files, all of it mine — I'm the only engineer on the
+      project. Most of it is machinery the player never sees directly, which is the part I find worth
+      building.
+    </p>
+
+    <div class="row" style="margin-top:3rem">
+      <div class="copy">
+        <h3>Enemies that disagree with each other</h3>
+        <ul class="traits">
+          <li class="hot">Reckless</li>
+          <li class="hot">Bloodthirsty</li>
+          <li class="hot">Berserker</li>
+          <li class="cool">Cautious</li>
+          <li class="cool">Cowardly</li>
+          <li class="cool">SelfPreserving</li>
+          <li>Opportunistic</li>
+        </ul>
+        <p>
+          Every unit runs the same planner: score the available moves, the lines of sight, the abilities, pick
+          the best one, repeat until the turn is spent. Traits don't add special-case behaviour, they change
+          what "best" means. A <code>Cowardly</code> unit and a <code>Berserker</code> read an identical board
+          and reach opposite conclusions.
+        </p>
+        <p><a href="/ai-traits.html">The full trait list &rarr;</a></p>
+      </div>
+      <div class="media empty" data-slot="media/system-ai.jpg"><img src="media/system-ai.jpg" alt="Enemy AI in play"></div>
+    </div>
+
+    <div class="row flip">
+      <div class="copy">
+        <h3>Modding as a first-class path</h3>
+        <p>
+          Two tiers. Sandboxed JavaScript for interface work, and full-access C# plugin assemblies for
+          everything else. The C# tier hot-reloads: rebuild a mod while the game is running and it swaps in
+          without a restart.
+        </p>
+        <p>
+          That loader is open source as
+          <a href="https://github.com/AvWolfe/GodotModKit">GodotModKit</a>, usable in any Godot 4 .NET
+          project, MIT licensed.
+        </p>
+      </div>
+      <div class="media empty" data-slot="media/system-mods.jpg"><img src="media/system-mods.jpg" alt="Modding tools"></div>
+    </div>
+
+    <div class="row">
+      <div class="copy">
+        <h3>Loadouts that name themselves</h3>
+        <p>
+          Modifier augments slot into ability augments, which slot into the character. A weapon is a small
+          stack of decisions rather than a number that goes up.
+        </p>
+        <p>
+          Names are built from what's installed, not written by hand. A mod contributes exactly one word,
+          those words fuse across the stack, and the whole thing is capped at two — so
+          <code>Light&nbsp;Shot</code> becomes <code>Toxic&nbsp;Light&nbsp;Shot</code> when a poison mod goes
+          in, and <code>Burning</code> over <code>Toxic</code> resolves to
+          <code>Phlogiston</code>. Pull the mod back out and the name reverts.
+        </p>
+        <p class="dim">
+          Two of the slots are about losing. A <strong>Reaction</strong> augment fires when its holder is hit
+          and lives; a <strong>Failsafe</strong> fires when its holder dies — a revive, a parting shot, a
+          blast that takes the room with it. Getting hurt and getting killed are both things you can build for.
+        </p>
+      </div>
+      <div class="media empty" data-slot="media/system-augments.jpg"><img src="media/system-augments.jpg" alt="Augment loadout screen"></div>
+    </div>
+
+    <div class="row flip">
+      <div class="copy">
+        <h3>The rest of it</h3>
+        <p>
+          A* pathfinding with per-unit clearance, and a separate line-of-sight grid so bodies don't block
+          shots the way terrain does. An energy-ordered turn timeline you can read ahead of. A day and night
+          cycle. Input rebinding driven by data rather than a hardcoded map. A HUD drawn in code so it can be
+          reskinned by a mod.
+        </p>
+      </div>
+      <div class="media empty" data-slot="media/shot-05.jpg"><img src="media/shot-05.jpg" alt="Gameplay screenshot"></div>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="wrap">
+    <span class="label">Who</span>
+    <h2>Avery Wolfe</h2>
+    <div class="about">
+      <div>
+        <p>
+          I'm a developer in Seattle. B.A. Computer Science, University of Iowa, 2024. I've been building
+          <em>At Great Cost</em> since 2023 with <strong>Brian Tambascio</strong>, who writes the story and
+          makes the art — I write all of the code and design how it plays. Alongside eight years in security
+          operations.
+        </p>
+        <p class="dim">
+          Comfortable in C#, Java, Python, Rust, C and C++. Most at home in the middle of a system that has
+          grown complicated enough to need a real design instead of another special case.
+        </p>
+      </div>
+      <div>
+        <ul class="links">
+          <li><span>Email</span> <a href="mailto:mail@averywolfe.dev">mail@averywolfe.dev</a></li>
+          <li><span>GitHub</span> <a href="https://github.com/AvWolfe">github.com/AvWolfe</a></li>
+          <li><span>Library</span> <a href="https://github.com/AvWolfe/GodotModKit">GodotModKit</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <footer>
+    <span>At Great Cost — Avery Wolfe &amp; Brian Tambascio — alpha, no release date</span>
+    <span>&copy; 2026 Avery Wolfe</span>
+  </footer>
+</div>
+
+<script>
+  // Any media slot whose file is missing keeps its placeholder; ones that load lose it.
+  document.querySelectorAll('.media').forEach(function (slot) {
+    var el = slot.querySelector('img, video');
+    if (!el) return;
+    if (el.tagName === 'IMG') {
+      if (el.complete && el.naturalWidth > 0) slot.classList.remove('empty');
+      else el.addEventListener('load', function () { slot.classList.remove('empty'); });
+    } else {
+      el.addEventListener('loadeddata', function () { slot.classList.remove('empty'); });
+    }
+  });
+</script>
+
+</body>
+</html>
