@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>At Great Cost — a turn-based tactics game</title>
-<meta name="description" content="At Great Cost: a turn-based tactics game in Godot 4 and C# by Avery Wolfe and Brian Tambascio. Trait-driven enemy AI, deep modding, and a lot of systems work.">
-<meta property="og:title" content="At Great Cost">
-<meta property="og:description" content="A turn-based tactics game where every enemy thinks differently. Built in Godot 4 / C#.">
+<title>A turn-based tactics game — Avery Wolfe &amp; Brian Tambascio</title>
+<meta name="description" content="An in-development turn-based tactics game in Godot 4 and C# by Avery Wolfe and Brian Tambascio. Energy-ordered turns, augment loadouts, and deep modding.">
+<meta property="og:title" content="Every turn spends something you needed">
+<meta property="og:description" content="A turn-based tactics game built around energy-ordered turns and augment loadouts. In development.">
 <meta property="og:image" content="https://averywolfe.dev/media/hero.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <style>
@@ -108,8 +108,8 @@
   }
 
   h1 {
-    font-size: clamp(2.6rem, 7vw, 5rem);
-    line-height: 0.98;
+    font-size: clamp(2.1rem, 5.2vw, 3.6rem);
+    line-height: 1.05;
     letter-spacing: -0.03em;
     margin: 1.1rem 0 0.8rem;
     font-weight: 700;
@@ -167,7 +167,8 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: 1rem;
   }
-  .caption { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.5rem; letter-spacing: 0.06em; }
+  .caption { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.55rem; letter-spacing: 0.04em; line-height: 1.5; }
+  .shot { margin: 0; }
 
   /* ---------- feature rows ---------- */
   .row {
@@ -239,16 +240,17 @@
   </div>
   <div class="inner">
     <div class="wrap">
-      <span class="status">Alpha · in development</span>
-      <h1>At Great Cost</h1>
-      <p class="kicker">A turn-based tactics game where no two enemies think the same way.</p>
+      <span class="status">Alpha · untitled</span>
+      <h1>Every turn spends<br>something you needed.</h1>
+      <p class="kicker">A turn-based tactics game built around energy-ordered turns and augment
+        loadouts. In development, and still looking for its name.</p>
       <p class="byline">Built in Godot 4 and C# by <a href="#about">Avery Wolfe</a> (code, gameplay design)
         and Brian Tambascio (story, art).</p>
     </div>
   </div>
 </header>
 
-<section id="trailer">
+<section id="trailer" data-hide-when-empty>
   <div class="wrap">
     <span class="label">Gameplay</span>
     <h2>See it move</h2>
@@ -261,15 +263,40 @@
   </div>
 </section>
 
-<section id="shots">
+<section id="shots" data-hide-when-empty>
   <div class="wrap">
-    <span class="label">Screenshots</span>
-    <h2>The field</h2>
+    <span class="label">In motion</span>
+    <h2>Systems, moving</h2>
+    <p class="lede narrow dim">
+      Short loops rather than screenshots — most of what's interesting here is a thing changing, not a
+      thing sitting still.
+    </p>
     <div class="shots">
-      <div class="media empty" data-slot="media/shot-01.jpg"><img src="media/shot-01.jpg" alt="Gameplay screenshot"></div>
-      <div class="media empty" data-slot="media/shot-02.jpg"><img src="media/shot-02.jpg" alt="Gameplay screenshot"></div>
-      <div class="media empty" data-slot="media/shot-03.jpg"><img src="media/shot-03.jpg" alt="Gameplay screenshot"></div>
-      <div class="media empty" data-slot="media/shot-04.jpg"><img src="media/shot-04.jpg" alt="Gameplay screenshot"></div>
+
+      <figure class="shot">
+        <div class="media empty" data-slot="media/clip-augment-naming.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-augment-naming.jpg">
+            <source src="media/clip-augment-naming.mp4" type="video/mp4"></video>
+        </div>
+        <figcaption class="caption">Mods going in and out. The name rebuilds itself each time.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="media empty" data-slot="media/clip-ability.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-ability.jpg">
+            <source src="media/clip-ability.mp4" type="video/mp4"></video>
+        </div>
+        <figcaption class="caption">An ability resolving — targeting, cost, hit.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="media empty" data-slot="media/clip-colliders.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-colliders.jpg">
+            <source src="media/clip-colliders.mp4" type="video/mp4"></video>
+        </div>
+        <figcaption class="caption">Walking the map with collision shapes drawn.</figcaption>
+      </figure>
+
     </div>
   </div>
 </section>
@@ -285,46 +312,6 @@
     </p>
 
     <div class="row" style="margin-top:3rem">
-      <div class="copy">
-        <h3>Enemies that disagree with each other</h3>
-        <ul class="traits">
-          <li class="hot">Reckless</li>
-          <li class="hot">Bloodthirsty</li>
-          <li class="hot">Berserker</li>
-          <li class="cool">Cautious</li>
-          <li class="cool">Cowardly</li>
-          <li class="cool">SelfPreserving</li>
-          <li>Opportunistic</li>
-        </ul>
-        <p>
-          Every unit runs the same planner: score the available moves, the lines of sight, the abilities, pick
-          the best one, repeat until the turn is spent. Traits don't add special-case behaviour, they change
-          what "best" means. A <code>Cowardly</code> unit and a <code>Berserker</code> read an identical board
-          and reach opposite conclusions.
-        </p>
-        <p><a href="/ai-traits.html">The full trait list &rarr;</a></p>
-      </div>
-      <div class="media empty" data-slot="media/system-ai.jpg"><img src="media/system-ai.jpg" alt="Enemy AI in play"></div>
-    </div>
-
-    <div class="row flip">
-      <div class="copy">
-        <h3>Modding as a first-class path</h3>
-        <p>
-          Two tiers. Sandboxed JavaScript for interface work, and full-access C# plugin assemblies for
-          everything else. The C# tier hot-reloads: rebuild a mod while the game is running and it swaps in
-          without a restart.
-        </p>
-        <p>
-          That loader is open source as
-          <a href="https://github.com/AvWolfe/GodotModKit">GodotModKit</a>, usable in any Godot 4 .NET
-          project, MIT licensed.
-        </p>
-      </div>
-      <div class="media empty" data-slot="media/system-mods.jpg"><img src="media/system-mods.jpg" alt="Modding tools"></div>
-    </div>
-
-    <div class="row">
       <div class="copy">
         <h3>Loadouts that name themselves</h3>
         <p>
@@ -346,15 +333,54 @@
       </div>
       <div class="media empty" data-slot="media/system-augments.jpg"><img src="media/system-augments.jpg" alt="Augment loadout screen"></div>
     </div>
-
+    <div class="row flip">
+      <div class="copy">
+        <h3>Enemies that disagree with each other</h3>
+        <ul class="traits">
+          <li class="hot">Reckless</li>
+          <li class="hot">Bloodthirsty</li>
+          <li class="hot">Berserker</li>
+          <li class="cool">Cautious</li>
+          <li class="cool">Cowardly</li>
+          <li class="cool">SelfPreserving</li>
+          <li>Opportunistic</li>
+        </ul>
+        <p>
+          Every unit runs the same planner: score the available moves, the lines of sight, the abilities, pick
+          the best one, repeat until the turn is spent. Traits reweight that scorer rather than branching it,
+          so a <code>Cowardly</code> unit and a <code>Berserker</code> read an identical board and reach
+          different conclusions. Traits that need genuinely different behaviour, rather than different
+          priorities, are still being wired in.
+        </p>
+        <p><a href="/ai-traits.html">The full trait list &rarr;</a></p>
+      </div>
+      <div class="media empty" data-slot="media/system-ai.jpg"><img src="media/system-ai.jpg" alt="Enemy AI in play"></div>
+    </div>
+    <div class="row">
+      <div class="copy">
+        <h3>Modding as a first-class path</h3>
+        <p>
+          Two tiers. Sandboxed JavaScript for interface work, and full-access C# plugin assemblies for
+          everything else. The C# tier hot-reloads: rebuild a mod while the game is running and it swaps in
+          without a restart.
+        </p>
+        <p>
+          That loader is open source as
+          <a href="https://github.com/AvWolfe/GodotModKit">GodotModKit</a>, usable in any Godot 4 .NET
+          project, MIT licensed.
+        </p>
+      </div>
+      <div class="media empty" data-slot="media/system-mods.jpg"><img src="media/system-mods.jpg" alt="Modding tools"></div>
+    </div>
     <div class="row flip">
       <div class="copy">
         <h3>The rest of it</h3>
         <p>
-          A* pathfinding with per-unit clearance, and a separate line-of-sight grid so bodies don't block
-          shots the way terrain does. An energy-ordered turn timeline you can read ahead of. A day and night
-          cycle. Input rebinding driven by data rather than a hardcoded map. A HUD drawn in code so it can be
-          reskinned by a mod.
+          Turn order runs on energy rather than initiative, and the timeline is readable ahead of time —
+          you can see what spending an ability now costs you three turns out, before you commit to it.
+          Underneath that: A* pathfinding with per-unit clearance, a separate line-of-sight grid so bodies
+          don't block shots the way terrain does, a day and night cycle, input rebinding driven by data
+          rather than a hardcoded map, and a HUD drawn in code so a mod can reskin it.
         </p>
       </div>
       <div class="media empty" data-slot="media/shot-05.jpg"><img src="media/shot-05.jpg" alt="Gameplay screenshot"></div>
@@ -370,7 +396,7 @@
       <div>
         <p>
           I'm a developer in Seattle. B.A. Computer Science, University of Iowa, 2024. I've been building
-          <em>At Great Cost</em> since 2023 with <strong>Brian Tambascio</strong>, who writes the story and
+          the game since 2023 with <strong>Brian Tambascio</strong>, who writes the story and
           makes the art — I write all of the code and design how it plays. Alongside eight years in security
           operations.
         </p>
@@ -392,23 +418,40 @@
 
 <div class="wrap">
   <footer>
-    <span>At Great Cost — Avery Wolfe &amp; Brian Tambascio — alpha, no release date</span>
+    <span>Untitled — Avery Wolfe &amp; Brian Tambascio — alpha, no release date</span>
     <span>&copy; 2026 Avery Wolfe</span>
   </footer>
 </div>
 
 <script>
   // Any media slot whose file is missing keeps its placeholder; ones that load lose it.
+  function fill(slot) { slot.classList.remove('empty'); prune(); }
+
+  // A section marked data-hide-when-empty disappears entirely while none of its media exist, so an
+  // unfinished section is absent rather than showing a grid of placeholders. It comes back on its own
+  // the moment a file is dropped in — no markup change needed.
+  function prune() {
+    document.querySelectorAll('section[data-hide-when-empty]').forEach(function (sec) {
+      var slots = sec.querySelectorAll('.media');
+      var anyLoaded = Array.prototype.some.call(slots, function (s) {
+        return !s.classList.contains('empty');
+      });
+      sec.hidden = slots.length > 0 && !anyLoaded;
+    });
+  }
+
   document.querySelectorAll('.media').forEach(function (slot) {
     var el = slot.querySelector('img, video');
     if (!el) return;
     if (el.tagName === 'IMG') {
-      if (el.complete && el.naturalWidth > 0) slot.classList.remove('empty');
-      else el.addEventListener('load', function () { slot.classList.remove('empty'); });
+      if (el.complete && el.naturalWidth > 0) fill(slot);
+      else el.addEventListener('load', function () { fill(slot); });
     } else {
-      el.addEventListener('loadeddata', function () { slot.classList.remove('empty'); });
+      el.addEventListener('loadeddata', function () { fill(slot); });
     }
   });
+  prune();
+  window.addEventListener('load', prune);
 </script>
 
 </body>

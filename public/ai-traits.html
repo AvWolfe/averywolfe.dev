@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Enemy AI traits — At Great Cost</title>
-<meta name="description" content="The 31 traits that reweight enemy decision-making in At Great Cost.">
+<title>Enemy AI traits</title>
+<meta name="description" content="The 31 traits that reweight enemy decision-making.">
 <style>
   :root {
     --void:#050810; --panel:#0b1020; --line:#1b2338;
@@ -71,7 +71,7 @@
 
 <div class="wrap">
   <header>
-    <a class="back" href="/">&larr; At Great Cost</a>
+    <a class="back" href="/">&larr; Back</a>
     <h1>Enemy AI traits</h1>
     <p class="lede">
       Every unit in the game runs the same planner. It scores the moves available to it, the lines of sight
@@ -79,14 +79,19 @@
       repeats until the turn is done.
     </p>
     <p class="lede">
-      Traits don't add special cases to that loop. They change the weights inside it — how much a kill is
-      worth, how badly it wants to stay unseen, what it will pay to close distance. Two units with different
-      traits read an identical board and come to opposite conclusions, which is the whole point: an encounter
-      should not feel like one enemy copy-pasted.
+      Traits change the weights inside that loop — how much a kill is worth, how badly it wants to stay
+      unseen, what it will pay to close distance. Two units with different traits read an identical board and
+      come to different conclusions, so an encounter shouldn't feel like one enemy copy-pasted.
     </p>
     <p class="lede">
-      There are <strong>31</strong> at present, grouped below. This page is generated from
-      <code>AiTraitRegistry.cs</code>, so it matches what is actually in the build.
+      There are <strong>31</strong> defined, grouped below. This page is generated from
+      <code>AiTraitRegistry.cs</code>, so the list matches the build.
+    </p>
+    <p class="lede caveat">
+      Honest caveat: this is the designed set, not a shipped feature list. Traits that work purely by
+      reweighting the scorer are live. The ones describing conditional behaviour — holding a grudge against
+      a specific attacker, waiting in ambush, turning on an ally — need per-plan scoring that isn't
+      implemented yet. It's an alpha; this list is where the system is going.
     </p>
   </header>
 
@@ -263,7 +268,7 @@
     </dl>
   </section>
 
-  <footer>At Great Cost — alpha. Traits are still being added and tuned.</footer>
+  <footer>Alpha — traits are still being added and tuned.</footer>
 </div>
 
 </body>

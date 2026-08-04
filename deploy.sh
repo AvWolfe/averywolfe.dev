@@ -6,7 +6,7 @@ HOST=root@averywolfe.dev
 DEST=/var/www/html/
 SRC="$(cd "$(dirname "$0")" && pwd)/public/"
 
-FLAGS=(-az --delete --checksum --exclude '.DS_Store')
+FLAGS=(-az --delete --checksum --exclude '.DS_Store' --exclude 'README.md')
 [[ "${1:-}" == "--live" ]] || FLAGS+=(--dry-run)
 
 rsync "${FLAGS[@]}" "$SRC" "$HOST:$DEST"
