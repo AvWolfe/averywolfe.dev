@@ -1,307 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>A turn-based tactics game — Avery Wolfe &amp; Brian Tambascio</title>
-<meta name="description" content="An in-development turn-based tactics game in Godot 4 and C# by Avery Wolfe and Brian Tambascio. Energy-ordered turns, augment loadouts, and deep modding.">
-<meta property="og:title" content="Every turn spends something you needed">
-<meta property="og:description" content="A turn-based tactics game built around energy-ordered turns and augment loadouts. In development.">
-<meta property="og:image" content="https://averywolfe.dev/media/hero.jpg">
-<meta name="twitter:card" content="summary_large_image">
-<style>
-  /* Palette lifted from the game's own HUD constants. */
-  :root {
-    --void:    #050810;   /* HUD backdrop, Color(0.02, 0.03, 0.05) */
-    --panel:   #0b1020;
-    --line:    #1b2338;
-    --fg:      #dfe4ee;
-    --muted:   #7c88a4;
-    --amber:   #cc8033;   /* Color(0.8, 0.5, 0.2)   */
-    --blue:    #4a8cff;   /* Color(0.25, 0.55, 1.0) */
-    --red:     #ff3359;   /* Color(1.0, 0.2, 0.35)  */
-    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A turn-based tactics game — Avery Wolfe &amp; Brian Tambascio</title>
+  <meta name="description" content="An in-development turn-based tactics game in Godot 4 and C# by Avery Wolfe and Brian Tambascio. Energy-ordered turns, augment loadouts, and deep modding.">
+  <meta property="og:title" content="Every turn spends something you needed">
+  <meta property="og:description" content="A turn-based tactics game built around energy-ordered turns and augment loadouts. In development.">
+  <meta property="og:image" content="https://averywolfe.dev/media/hero.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>
+    /* Palette lifted from the game's own HUD constants. */
+    :root {
+      --void:    #050810;   /* HUD backdrop, Color(0.02, 0.03, 0.05) */
+      --panel:   #0b1020;
+      --line:    #1b2338;
+      --fg:      #dfe4ee;
+      --muted:   #7c88a4;
+      --amber:   #cc8033;   /* Color(0.8, 0.5, 0.2)   */
+      --blue:    #4a8cff;   /* Color(0.25, 0.55, 1.0) */
+      --red:     #ff3359;   /* Color(1.0, 0.2, 0.35)  */
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-  * { box-sizing: border-box; }
+    * { box-sizing: border-box; }
 
-  html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; }
 
-  body {
-    margin: 0;
-    background: var(--void);
-    color: var(--fg);
-    font: 16px/1.7 var(--sans);
-    -webkit-font-smoothing: antialiased;
-  }
+    body {
+      margin: 0;
+      background: var(--void);
+      color: var(--fg);
+      font: 16px/1.7 var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
 
-  /* Faint scanlines, echoing the game's CRT shader. Delete this block to remove. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 100;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(255,255,255,0.016) 0px,
-      rgba(255,255,255,0.016) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-  }
-  @media (prefers-reduced-motion: reduce) { body::after { display: none; } }
+    /* Faint scanlines, echoing the game's CRT shader. Delete this block to remove. */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      background: repeating-linear-gradient(
+              to bottom,
+              rgba(255,255,255,0.016) 0px,
+              rgba(255,255,255,0.016) 1px,
+              transparent 1px,
+              transparent 3px
+      );
+    }
+    @media (prefers-reduced-motion: reduce) { body::after { display: none; } }
 
-  .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
-  .narrow { max-width: 44rem; }
+    .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
+    .narrow { max-width: 44rem; }
 
-  a { color: var(--amber); text-underline-offset: 3px; }
-  a:hover { color: #e8a05c; }
+    a { color: var(--amber); text-underline-offset: 3px; }
+    a:hover { color: #e8a05c; }
 
-  .label {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    color: var(--muted);
-  }
+    .label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+    }
 
-  /* ---------- hero ---------- */
-  .hero {
-    position: relative;
-    min-height: 82vh;
-    display: flex;
-    align-items: flex-end;
-    border-bottom: 1px solid var(--line);
-    overflow: hidden;
-  }
-  .hero .bg {
-    position: absolute; inset: 0;
-    background: var(--panel) center/cover no-repeat;
-    /* It borrows .media for the missing-file placeholder, but must fill the hero rather than
-       take .media's 16/9 — otherwise the splash stops short of the copy on narrow screens. */
-    aspect-ratio: auto;
-  }
-  .hero .bg img, .hero .bg video {
-    width: 100%; height: 100%; object-fit: cover; display: block;
-  }
-  .hero::before {
-    content: "";
-    position: absolute; inset: 0; z-index: 1;
-    background:
-      radial-gradient(120% 90% at 70% 20%, transparent 30%, rgba(5,8,16,0.75) 100%),
-      linear-gradient(to top, var(--void) 4%, rgba(5,8,16,0.55) 45%, rgba(5,8,16,0.25) 100%);
-  }
-  .hero .inner { position: relative; z-index: 2; padding: 5rem 0 4rem; width: 100%; }
+    /* ---------- hero ---------- */
+    .hero {
+      position: relative;
+      min-height: 82vh;
+      display: flex;
+      align-items: flex-end;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+    }
+    .hero .bg {
+      position: absolute; inset: 0;
+      background: var(--panel) center/cover no-repeat;
+      /* It borrows .media for the missing-file placeholder, but must fill the hero rather than
+         take .media's 16/9 — otherwise the splash stops short of the copy on narrow screens. */
+      aspect-ratio: auto;
+    }
+    .hero .bg img, .hero .bg video {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0; z-index: 1;
+      background:
+              radial-gradient(120% 90% at 70% 20%, transparent 30%, rgba(5,8,16,0.75) 100%),
+              linear-gradient(to top, var(--void) 4%, rgba(5,8,16,0.55) 45%, rgba(5,8,16,0.25) 100%);
+    }
+    .hero .inner { position: relative; z-index: 2; padding: 5rem 0 4rem; width: 100%; }
 
-  .status {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    font-family: var(--mono); font-size: 0.7rem;
-    text-transform: uppercase; letter-spacing: 0.16em;
-    color: var(--amber);
-    border: 1px solid rgba(204,128,51,0.35);
-    background: rgba(204,128,51,0.07);
-    padding: 0.3rem 0.7rem;
-    border-radius: 2px;
-  }
-  .status::before {
-    content: ""; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--amber); box-shadow: 0 0 8px var(--amber);
-  }
+    .status {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-family: var(--mono); font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.16em;
+      color: var(--amber);
+      border: 1px solid rgba(204,128,51,0.35);
+      background: rgba(204,128,51,0.07);
+      padding: 0.3rem 0.7rem;
+      border-radius: 2px;
+    }
+    .status::before {
+      content: ""; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--amber); box-shadow: 0 0 8px var(--amber);
+    }
 
-  h1 {
-    font-size: clamp(2.1rem, 5.2vw, 3.6rem);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    margin: 1.1rem 0 0.8rem;
-    font-weight: 700;
-  }
-  .kicker {
-    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-    color: var(--fg);
-    max-width: 34rem;
-    margin: 0 0 1.6rem;
-  }
-  .byline { color: var(--muted); font-size: 0.95rem; margin: 0; }
+    h1 {
+      font-size: clamp(2.1rem, 5.2vw, 3.6rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin: 1.1rem 0 0.8rem;
+      font-weight: 700;
+    }
+    .kicker {
+      font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+      color: var(--fg);
+      max-width: 34rem;
+      margin: 0 0 1.6rem;
+    }
+    .byline { color: var(--muted); font-size: 0.95rem; margin: 0; }
 
-  /* ---------- sections ---------- */
-  section { padding: 5.5rem 0; border-bottom: 1px solid var(--line); }
-  section:last-of-type { border-bottom: 0; }
+    /* ---------- sections ---------- */
+    section { padding: 5.5rem 0; border-bottom: 1px solid var(--line); }
+    section:last-of-type { border-bottom: 0; }
 
-  h2 {
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    letter-spacing: -0.02em;
-    margin: 0.6rem 0 1.2rem;
-    font-weight: 650;
-  }
-  h3 { font-size: 1.15rem; margin: 0 0 0.5rem; font-weight: 650; }
-  p { margin: 0 0 1.1rem; }
-  .lede { font-size: 1.1rem; color: var(--fg); }
-  .dim { color: var(--muted); }
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      letter-spacing: -0.02em;
+      margin: 0.6rem 0 1.2rem;
+      font-weight: 650;
+    }
+    h3 { font-size: 1.15rem; margin: 0 0 0.5rem; font-weight: 650; }
+    p { margin: 0 0 1.1rem; }
+    .lede { font-size: 1.1rem; color: var(--fg); }
+    .dim { color: var(--muted); }
 
-  /* ---------- media slots ---------- */
-  .media {
-    position: relative;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    overflow: hidden;
-    aspect-ratio: 16 / 9;
-  }
-  .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* ---------- media slots ---------- */
+    .media {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+    }
+    .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-  /* Shown only when the file isn't there yet. */
-  .media.empty::after {
-    content: attr(data-slot);
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    text-align: center; padding: 1rem;
-    font-family: var(--mono); font-size: 0.7rem;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--muted);
-    background:
-      repeating-linear-gradient(45deg, rgba(124,136,164,0.05) 0 10px, transparent 10px 20px);
-  }
-  .media.empty img, .media.empty video { display: none; }
+    /* Shown only when the file isn't there yet. */
+    .media.empty::after {
+      content: attr(data-slot);
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 1rem;
+      font-family: var(--mono); font-size: 0.7rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted);
+      background:
+              repeating-linear-gradient(45deg, rgba(124,136,164,0.05) 0 10px, transparent 10px 20px);
+    }
+    .media.empty img, .media.empty video { display: none; }
 
-  .shots {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-    gap: 1rem;
-  }
-  .caption b { color: var(--fg); font-weight: 600; }
-  .soon { color: var(--muted); font-weight: 400; font-size: 0.6em; letter-spacing: 0.04em; }
-  .caption { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.55rem; letter-spacing: 0.04em; line-height: 1.5; }
-  .shot { margin: 0; }
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+      gap: 1rem;
+    }
+    .caption b { color: var(--fg); font-weight: 600; }
+    .soon { color: var(--muted); font-weight: 400; font-size: 0.6em; letter-spacing: 0.04em; }
+    .caption { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.55rem; letter-spacing: 0.04em; line-height: 1.5; }
+    .shot { margin: 0; }
 
-  /* ---------- feature rows ---------- */
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2.5rem;
-    align-items: center;
-    margin-bottom: 3.5rem;
-  }
-  .row:last-child { margin-bottom: 0; }
-  .row.flip .copy { order: 2; }
-  @media (max-width: 800px) {
-    .row, .row.flip .copy { grid-template-columns: 1fr; order: 0; }
-    .row { gap: 1.25rem; }
-  }
+    /* ---------- feature rows ---------- */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      align-items: center;
+      margin-bottom: 3.5rem;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .row.flip .copy { order: 2; }
+    @media (max-width: 800px) {
+      .row, .row.flip .copy { grid-template-columns: 1fr; order: 0; }
+      .row { gap: 1.25rem; }
+    }
 
-  .traits { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.1rem; padding: 0; list-style: none; }
-  .traits li {
-    font-family: var(--mono); font-size: 0.72rem;
-    border: 1px solid var(--line); border-radius: 2px;
-    padding: 0.2rem 0.5rem; color: var(--muted);
-  }
-  .traits li.hot { color: var(--red); border-color: rgba(255,51,89,0.3); }
-  .traits li.cool { color: var(--blue); border-color: rgba(74,140,255,0.3); }
+    .traits { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.1rem; padding: 0; list-style: none; }
+    .traits li {
+      font-family: var(--mono); font-size: 0.72rem;
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.2rem 0.5rem; color: var(--muted);
+    }
+    .traits li.hot { color: var(--red); border-color: rgba(255,51,89,0.3); }
+    .traits li.cool { color: var(--blue); border-color: rgba(74,140,255,0.3); }
 
-  code {
-    font-family: var(--mono); font-size: 0.85em;
-    background: var(--panel); border: 1px solid var(--line);
-    padding: 0.08em 0.35em; border-radius: 2px;
-  }
+    code {
+      font-family: var(--mono); font-size: 0.85em;
+      background: var(--panel); border: 1px solid var(--line);
+      padding: 0.08em 0.35em; border-radius: 2px;
+    }
 
+    /* ---------- slot cards (loadout breakdown) ----------
+       Amber-bordered boxes in the same language as the .status pill: main slots across
+       one row of three, system slots in a 2x2 block beneath them. */
+    .slots {
+      list-style: none; margin: 0 0 2.4rem; padding: 0;
+      display: grid; gap: 1rem;
+    }
+    .slots.main   { grid-template-columns: repeat(3, 1fr); }
+    .slots.system { grid-template-columns: repeat(2, 1fr); }
+    .slots li {
+      /* Same box as .console / .media: panel fill, hairline border, 3px radius.
+         Swap the border colour for var(--line) to drop the amber accent entirely. */
+      background: var(--panel);
+      border: 1px solid rgba(204,128,51,0.32);
+      border-radius: 3px;
+      padding: 1.1rem 1.25rem;
+    }
+    .slots h4 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem; font-weight: 650; color: var(--fg);
+    }
+    /* The count is a quantity, not part of the name: smaller and quieter. */
+    .slots h4 span { font-size: 0.78rem; font-weight: 400; color: var(--muted); margin-left: 0.35rem; }
+    .slots p { margin: 0; color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
+    @media (max-width: 800px) {
+      .slots.main, .slots.system { grid-template-columns: 1fr; }
+    }
 
-  .underhood { list-style: none; margin: 0; padding: 0; }
-  .underhood li {
-    color: var(--muted); font-size: 0.95rem; line-height: 1.6;
-    padding-left: 0.9rem; margin-bottom: 0.6rem; position: relative;
-  }
-  .underhood li::before {
-    content: ""; position: absolute; left: 0; top: 0.65em;
-    width: 4px; height: 4px; background: var(--amber); border-radius: 50%;
-  }
-  .underhood b { color: var(--fg); font-weight: 600; }
+    .underhood { list-style: none; margin: 0; padding: 0; }
+    .underhood li {
+      color: var(--muted); font-size: 0.95rem; line-height: 1.6;
+      padding-left: 0.9rem; margin-bottom: 0.6rem; position: relative;
+    }
+    .underhood li::before {
+      content: ""; position: absolute; left: 0; top: 0.65em;
+      width: 4px; height: 4px; background: var(--amber); border-radius: 50%;
+    }
+    .underhood b { color: var(--fg); font-weight: 600; }
 
-  /* ---------- console ---------- */
-  .console {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 1.1rem 1.25rem;
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    line-height: 2;
-    overflow-x: auto;
-  }
-  .console div { white-space: nowrap; }
-  .console .p { color: var(--amber); user-select: none; }
-  .console .c { color: var(--fg); }
-  .console .n { color: var(--muted); }
+    /* ---------- console ---------- */
+    .console {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      padding: 1.1rem 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      line-height: 2;
+      overflow-x: auto;
+    }
+    .console div { white-space: nowrap; }
+    .console .p { color: var(--amber); user-select: none; }
+    .console .c { color: var(--fg); }
+    .console .n { color: var(--muted); }
 
-  /* ---------- command list (collapsed by default) ---------- */
-  .cmds { margin-top: 1.8rem; border-top: 1px solid var(--line); }
-  .cmds summary {
-    cursor: pointer;
-    list-style: none;
-    padding: 0.9rem 0;
-    font-family: var(--mono); font-size: 0.72rem;
-    text-transform: uppercase; letter-spacing: 0.16em;
-    color: var(--muted);
-  }
-  .cmds summary::-webkit-details-marker { display: none; }
-  .cmds summary::before { content: "+\00a0\00a0"; color: var(--amber); }
-  .cmds[open] summary::before { content: "\2212\00a0\00a0"; }
-  .cmds summary:hover { color: var(--fg); }
+    /* ---------- command list (collapsed by default) ---------- */
+    .cmds { margin-top: 1.8rem; border-top: 1px solid var(--line); }
+    .cmds summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 0.9rem 0;
+      font-family: var(--mono); font-size: 0.72rem;
+      text-transform: uppercase; letter-spacing: 0.16em;
+      color: var(--muted);
+    }
+    .cmds summary::-webkit-details-marker { display: none; }
+    .cmds summary::before { content: "+\00a0\00a0"; color: var(--amber); }
+    .cmds[open] summary::before { content: "\2212\00a0\00a0"; }
+    .cmds summary:hover { color: var(--fg); }
 
-  .cmds h4 {
-    font-family: var(--mono); font-size: 0.68rem; font-weight: 400;
-    text-transform: uppercase; letter-spacing: 0.16em;
-    color: var(--amber);
-    margin: 1.5rem 0 0.7rem;
-  }
-  .cmds dl {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 0.5rem 1.4rem;
-    margin: 0;
-  }
-  .cmds dt { font-family: var(--mono); font-size: 0.78rem; color: var(--fg); }
-  .cmds dd { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
-  .cmds dd code { font-size: 0.8em; }
-  .cmds .note { color: var(--muted); font-size: 0.88rem; margin: 0; }
-  @media (max-width: 640px) {
-    .cmds dl { grid-template-columns: 1fr; gap: 0.1rem; }
-    .cmds dd { margin-bottom: 0.8rem; }
-  }
+    .cmds h4 {
+      font-family: var(--mono); font-size: 0.68rem; font-weight: 400;
+      text-transform: uppercase; letter-spacing: 0.16em;
+      color: var(--amber);
+      margin: 1.5rem 0 0.7rem;
+    }
+    .cmds dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 0.5rem 1.4rem;
+      margin: 0;
+    }
+    .cmds dt { font-family: var(--mono); font-size: 0.78rem; color: var(--fg); }
+    .cmds dd { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+    .cmds dd code { font-size: 0.8em; }
+    .cmds .note { color: var(--muted); font-size: 0.88rem; margin: 0; }
+    @media (max-width: 640px) {
+      .cmds dl { grid-template-columns: 1fr; gap: 0.1rem; }
+      .cmds dd { margin-bottom: 0.8rem; }
+    }
 
-  /* ---------- about ---------- */
-  .about { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
-  @media (max-width: 800px) { .about { grid-template-columns: 1fr; gap: 2rem; } }
+    /* ---------- about ---------- */
+    .about { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+    @media (max-width: 800px) { .about { grid-template-columns: 1fr; gap: 2rem; } }
 
-  .links { list-style: none; padding: 0; margin: 0; }
-  .links li { margin-bottom: 0.55rem; }
-  .links span {
-    display: inline-block; width: 5rem;
-    font-family: var(--mono); font-size: 0.68rem;
-    text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted);
-  }
+    .links { list-style: none; padding: 0; margin: 0; }
+    .links li { margin-bottom: 0.55rem; }
+    .links span {
+      display: inline-block; width: 5rem;
+      font-family: var(--mono); font-size: 0.68rem;
+      text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted);
+    }
 
-  footer {
-    padding: 2.5rem 0 4rem;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
-  }
-</style>
+    footer {
+      padding: 2.5rem 0 4rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+  </style>
 </head>
 <body>
-
-<!-- ============================================================================
-     MEDIA: drop files into public/media/ using these names and they appear.
-       hero.jpg          wide splash behind the title (or hero.mp4, see below)
-       trailer.mp4       gameplay video   + trailer-poster.jpg as its still
-       shot-01..04.jpg   screenshot grid
-       system-ai.jpg     enemy AI section
-       system-mods.jpg   modding section
-     Anything missing shows a labelled placeholder instead of breaking.
-     ============================================================================ -->
 
 <header class="hero">
   <div class="bg media empty" data-slot="media/hero.jpg">
@@ -356,7 +373,7 @@
           <video autoplay muted loop playsinline poster="media/clip-scatter-shot.jpg">
             <source src="media/clip-scatter-shot.mp4" type="video/mp4"></video>
         </div>
-        <figcaption class="caption"><b>Scatter Shot</b><br>A multi-shot blast, though it's RNG, so the pellets may or may not hit the targets inside the cone.</figcaption>
+        <figcaption class="caption"><b>Scatter Shot</b><br>A multi-shot blast — it's RNG, so pellets may or may not hit targets inside the cone. Here the Dark Slug dies and triggers its Failsafe augment, a poison cloud that catches the enemy beside it.</figcaption>
       </figure>
 
       <figure class="shot">
@@ -401,28 +418,17 @@
     <h2>Systems, mostly</h2>
     <p class="lede narrow dim">
       Roughly 74,000 lines of C# across 500 source files, all of it mine — I'm the only engineer on the
-      project. Most of it is machinery the player never sees directly, which is the part I find worth
-      building.
+      project. Most of it is machinery the player never sees directly.
     </p>
 
     <div class="row" style="margin-top:3rem">
       <div class="copy">
-        <h3>Loadouts that name themselves</h3>
+        <h3>Augments that name themselves</h3>
         <p>
-          Modifier augments slot into ability augments, which slot into the character. A weapon is a small
-          stack of decisions rather than a number that goes up.
+          Mods slot into ability augments, which slot into the character. An augment rolls with base stats and is upgraded with mods for extra stats, status effects, or expansion chips that add more slots. An expansion chip has to go in a base slot rather than another expansion slot — that restriction is what stops mod chips stacking forever.
         </p>
         <p>
-          Names are built from what's installed, not written by hand. A mod contributes exactly one word,
-          those words fuse across the stack, and the whole thing is capped at two — so
-          <code>Light&nbsp;Shot</code> becomes <code>Toxic&nbsp;Light&nbsp;Shot</code> when a poison mod goes
-          in, and <code>Burning</code> over <code>Toxic</code> resolves to
-          <code>Phlogiston</code>. Pull the mod back out and the name reverts.
-        </p>
-        <p class="dim">
-          Two of the slots are about losing. A <strong>Reaction</strong> augment fires when its holder is hit
-          and lives; a <strong>Failsafe</strong> fires when its holder dies — a revive, a parting shot, a
-          blast that takes the room with it. Getting hurt and getting killed are both things you can build for.
+          Names are built from what's installed. Each mod contributes exactly one word — more damage is <code>Heavy</code>, more range is <code>Sniping</code> — those words fuse across the stack, and the whole thing is capped at two. So <code>Light Shot</code> with a range mod becomes <code>Sniping Light Shot</code>; stack a damage mod on top and the pair fuses into <code>Piercing Light Shot</code>.
         </p>
       </div>
       <div class="media empty" data-slot="media/clip-augment-naming.mp4">
@@ -430,6 +436,44 @@
           <source src="media/clip-augment-naming.mp4" type="video/mp4"></video>
       </div>
     </div>
+
+    <h3>Main Slots</h3>
+    <ul class="slots main">
+      <li>
+        <h4>Ability <span>×4</span></h4>
+        <p>The numbered attack slots. Each holds an ability augment with its own rolled stats and mod slots.</p>
+      </li>
+      <li>
+        <h4>Throwable <span>×4</span></h4>
+        <p>Grenades, throwing knives — lobbed at a point rather than aimed down a line.</p>
+      </li>
+      <li>
+        <h4>Item <span>×4</span></h4>
+        <p>Stimpacks, scanners, energy restores. Four per battle, not four kinds: equip four stimpacks and you get four uses, so the slot count is the budget.</p>
+      </li>
+    </ul>
+
+    <h3>System Slots</h3>
+    <ul class="slots system">
+      <li>
+        <h4>Move</h4>
+        <p>Walk and Teleport so far. Each version you find carries its own movement efficiency, which sets how much energy it costs to cover ground. More movement styles are planned.</p>
+      </li>
+      <li>
+        <h4>Support</h4>
+        <p>Adjusts base stats: Max HP, Max Shields, Max Energy, and Speed — how much energy you gain per tick. Some reduce Max Energy, which means fewer actions per turn but turns that come around faster. Stacked with Speed, that's a real build.</p>
+      </li>
+      <li>
+        <h4>Reaction</h4>
+        <p>Fires when its holder is hit and survives. You can put a Light Shot here and shoot the attacker back, but an ability used as a reaction still costs energy, so it delays your own turn. Dedicated reaction augments are free.</p>
+      </li>
+      <li>
+        <h4>Failsafe</h4>
+        <p>Fires when its holder dies. A revive, or a grenade that takes the room with it.</p>
+      </li>
+    </ul>
+    <p class="dim" style="margin-bottom: 3.5rem;">Every combination of installed mods resolves to a name — <a href="#">the full table is here.</a></p>
+
     <div class="row flip">
       <div class="copy">
         <h3>Enemies that disagree with each other</h3>
@@ -517,30 +561,24 @@
 <section id="tooling">
   <div class="wrap">
     <span class="label">Tooling</span>
-    <h2>A console, because six hours of testing is six hours of setup</h2>
+    <h2>Console commands</h2>
     <p class="lede narrow dim">
-      Thirty-odd commands for putting the game into a specific state without playing your way there — spawn
-      entities, hand out augments and mods, move the day/night cycle, then capture the result. It's a debug
-      utility first, so anything that changes gameplay or breaks progression is gated behind
-      <code>CheatMode</code>. The clips further up this page were set up with these.
+      Most of the commands are gated behind cheat mode, since it's a debug utility. Give augments and mod chips, spawn entities, set the day/night cycle, and so on.
     </p>
 
     <div class="console">
-      <div><span class="p">&gt;</span> <span class="c">CheatMode true</span>  <span class="n">// the gate — most of the list is behind it</span></div>
-      <div><span class="p">&gt;</span> <span class="c">Spawn player Human Rebel 200</span>  <span class="n">// a player-side human, faction Rebel, 200px out</span></div>
-      <div><span class="p">&gt;</span> <span class="c">CheatMode true &amp;&amp; give augment lightShot damage=15</span>  <span class="n">// any stat on an augment can be set inline</span></div>
-      <div><span class="p">&gt;</span> <span class="c">setTime dusk &amp;&amp; camera bind Dawkins</span>  <span class="n">// set the light, then follow a unit</span></div>
-      <div><span class="p">&gt;</span> <span class="c">delay 3 &amp;&amp; kill hostiles</span>  <span class="n">// the rest of the chain runs after the wait</span></div>
-      <div><span class="p">&gt;</span> <span class="c">resurrect dawkins 40</span>  <span class="n">// back up at 40 health; omit the number for full</span></div>
-      <div><span class="p">&gt;</span> <span class="c">CheatMode &amp;&amp; ScannerTheft true</span>  <span class="n">// one argument, borrowed by both — scanner loots the living</span></div>
-      <div><span class="p">&gt;</span> <span class="c">screenshot clean</span>  <span class="n">// PNG with the dev readout out of frame; F12 does the same</span></div>
-      <div><span class="p">&gt;</span> <span class="c">record start 30</span>  <span class="n">// frame sequence, muxed to mp4 on stop</span></div>
+      <div><span class="p">&gt;</span> <span class="c">CheatMode true</span> <span class="n">// commands that affect gameplay or break progression are locked behind this</span></div>
+      <div><span class="p">&gt;</span> <span class="c">Spawn player Human Rebel 200</span> <span class="n">// spawns a player human with the faction Rebel, 200px from your position</span></div>
+      <div><span class="p">&gt;</span> <span class="c">cheatMode true &amp;&amp; give augment lightshot damage=15</span> <span class="n">// turns on cheat mode and gives a lightshot augment — all stats on augments can optionally be set this way</span></div>
+      <div><span class="p">&gt;</span> <span class="c">delay 3 &amp;&amp; kill hostiles</span> <span class="n">// kills all hostiles after 3 seconds</span></div>
+      <div><span class="p">&gt;</span> <span class="c">resurrect dawkins 40</span> <span class="n">// resurrects a named entity (dawkins) to 40 health; omitting the number gives full health</span></div>
+      <div><span class="p">&gt;</span> <span class="c">scannerTheft true</span> <span class="n">// allows the scanner to loot entities while they are still alive, gated by cheat mode for debugging</span></div>
     </div>
 
     <p class="dim" style="margin-top:1.3rem">
-      <code>delay</code> is unique as it requires to be chained via <code>&amp;&amp;</code>, it delays the
-      chained command by x seconds; Chaining also allows passing the same value to two commands, for example
-      <code>cheatmode &amp;&amp; scannertheft true</code>
+      <code>delay</code> is unique in that it has to be chained via <code>&amp;&amp;</code> — it delays the
+      chained command by x seconds. Chaining also allows passing the same value to two commands, for example
+      <code>cheatMode &amp;&amp; scannerTheft true</code>.
     </p>
 
     <details class="cmds">
@@ -555,9 +593,9 @@
       <h4>Entities</h4>
       <dl>
         <dt>Spawn</dt><dd>Place an entity, optionally player-side, with factions, N px out —
-          <code>Spawn player Human Rebel 200</code>.</dd>
+        <code>Spawn player Human Rebel 200</code>.</dd>
         <dt>give</dt><dd>Hand a unit an augment, mod chip or item; any stat can be set inline.
-          <code>give -examples</code> for the forms.</dd>
+        <code>give -examples</code> for the forms.</dd>
         <dt>kill</dt><dd>Kill a unit or a group — <code>kill dawkins</code>, <code>kill hostiles</code>.</dd>
         <dt>resurrect</dt><dd>Revive a fallen unit at N health, or full health if the number is left off.</dd>
         <dt>setTurn</dt><dd>Hand the current turn to a named unit.</dd>
@@ -577,7 +615,7 @@
       <h4>World and time</h4>
       <dl>
         <dt>setTime</dt><dd>Move the day/night cycle by hour or by name — <code>0–24</code>, day, noon,
-          dusk, night, dawn.</dd>
+        dusk, night, dawn.</dd>
         <dt>timeScale</dt><dd>Engine time scale, 0.0 to 10.0.</dd>
         <dt>pause</dt><dd>Freeze time. Same as <code>timeScale 0</code>.</dd>
         <dt>resume</dt><dd>Restore the time scale from before the pause.</dd>
@@ -587,7 +625,7 @@
       <dl>
         <dt>camera</dt><dd><code>camera bind &lt;name&gt;</code> follows a unit, in or out of battle.</dd>
         <dt>screenshot</dt><dd>PNG of the frame. <code>clean</code> drops the dev readout, <code>bare</code>
-          the whole HUD; the console panel always goes.</dd>
+        the whole HUD; the console panel always goes.</dd>
         <dt>record</dt><dd>Frame sequence at a set rate and scale, muxed to mp4 on stop.</dd>
       </dl>
 
@@ -611,20 +649,16 @@
     <div class="about">
       <div>
         <p>
-          I'm a developer in Seattle. B.A. Computer Science, University of Iowa, 2024. I've been building
-          the game since 2023 with <strong>Brian Tambascio</strong>, who writes the story and
-          makes the art — I write all of the code and design how it plays. Alongside eight years in security
-          operations.
+          I'm a developer in Seattle. B.A. Computer Science, University of Iowa, 2024. I've been building the game since 2023 with Brian Tambascio, who writes the story and makes the art — I write all of the code and design how it plays. Alongside eight years in security operations.
         </p>
-        <p class="dim">
-          Comfortable in C#, Java, Python, Rust, C and C++. Most at home in the middle of a system that has
-          grown complicated enough to need a real design instead of another special case.
+        <p>
+          Comfortable in C#, Java, Python, Rust, C and C++. Most at home in the middle of a system that has grown complicated enough to need a real design instead of another special case.
         </p>
       </div>
       <div>
         <ul class="links">
           <li><span>Email</span> <a href="mailto:mail@averywolfe.dev">mail@averywolfe.dev</a></li>
-          <li><span>GitHub</span> <a href="https://github.com/AvWolfe">github.com/AvWolfe</a></li>
+          <li><span>Github</span> <a href="https://github.com/AvWolfe">github.com/AvWolfe</a></li>
           <li><span>Library</span> <a href="https://github.com/AvWolfe/GodotModKit">GodotModKit</a></li>
         </ul>
       </div>
@@ -632,12 +666,12 @@
   </div>
 </section>
 
-<div class="wrap">
-  <footer>
+<footer>
+  <div class="wrap" style="width: 100%; display: flex; justify-content: space-between;">
     <span>Untitled — Avery Wolfe &amp; Brian Tambascio — alpha, no release date</span>
     <span>&copy; 2026 Avery Wolfe</span>
-  </footer>
-</div>
+  </div>
+</footer>
 
 <script>
   // Any media slot whose file is missing keeps its placeholder; ones that load lose it.

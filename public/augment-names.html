@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Augment names</title>
+<meta name="description" content="Every word an augment name can be built from, and every combination that fuses into one.">
+<style>
+  :root {
+    --void:#050810; --panel:#0b1020; --line:#1b2338;
+    --fg:#dfe4ee; --muted:#7c88a4;
+    --amber:#cc8033; --blue:#4a8cff; --red:#ff3359; --violet:#9b6bd8;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--void); color:var(--fg); font:16px/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
+  body::after {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:100;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.016) 0 1px, transparent 1px 3px);
+  }
+  @media (prefers-reduced-motion: reduce) { body::after { display:none; } }
+
+  .wrap { max-width:62rem; margin:0 auto; padding:0 1.5rem; }
+  a { color:var(--amber); text-underline-offset:3px; }
+  a:hover { color:#e8a05c; }
+
+  header { padding:4rem 0 2.5rem; border-bottom:1px solid var(--line); }
+  .back { font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; }
+  h1 { font-size:clamp(2rem,5vw,3rem); letter-spacing:-.03em; margin:1.2rem 0 .8rem; font-weight:700; }
+  .lede { max-width:44rem; font-size:1.05rem; margin:0 0 1rem; }
+  .lede + .lede { color:var(--muted); }
+  code {
+    font-family:var(--mono); font-size:.85em; background:var(--panel);
+    border:1px solid var(--line); padding:.08em .35em; border-radius:2px;
+  }
+
+  section { padding:3.25rem 0; border-bottom:1px solid var(--line); }
+  section:last-of-type { border-bottom:0; }
+  h2 {
+    font-size:.78rem; text-transform:uppercase; letter-spacing:.16em;
+    font-family:var(--mono); color:var(--muted); font-weight:600;
+    margin:0 0 .35rem; display:flex; align-items:center; gap:.6rem;
+  }
+  .count { font-size:.68rem; color:var(--void); background:var(--muted); border-radius:10px; padding:.05rem .45rem; }
+  .blurb { color:var(--muted); margin:0 0 1.5rem; font-size:.95rem; max-width:44rem; }
+
+  table { border-collapse:collapse; width:100%; max-width:44rem; }
+  td { padding:.3rem .5rem .3rem 0; vertical-align:middle; border-bottom:1px solid rgba(27,35,56,.6); }
+  tr:last-child td { border-bottom:0; }
+  .src { width:60%; }
+  .arw { color:var(--muted); width:2rem; text-align:center; font-size:.85rem; }
+  .res { font-weight:600; color:var(--amber); font-size:.95rem; }
+
+  .w {
+    display:inline-block; font-family:var(--mono); font-size:.72rem;
+    border:1px solid var(--line); border-radius:2px; padding:.12rem .45rem;
+    margin:.12rem .25rem .12rem 0; color:var(--muted); background:var(--panel);
+  }
+  .tag {
+    font-family:var(--mono); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--violet); border:1px solid rgba(155,107,216,.35); border-radius:2px;
+    padding:.05rem .3rem; margin-left:.5rem; font-weight:400; vertical-align:middle;
+  }
+
+  .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr)); gap:2.5rem; }
+  .cols h3 { font-size:.95rem; margin:0 0 .6rem; font-weight:650; }
+
+  footer { padding:2.5rem 0 4rem; color:var(--muted); font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="back" href="/">&larr; Back</a>
+    <h1>Augment names</h1>
+    <p class="lede">
+      An augment's name is rebuilt from whatever is installed in it. Each mod contributes exactly one word,
+      those words fuse where a combination has a name of its own, and the result is capped at
+      <strong>2</strong> words.
+    </p>
+    <p class="lede">
+      Everything below is a lookup table; the logic is one small merge used twice. This page is current from
+      my <code>AugmentNames.cs</code>, so it matches the build.
+    </p>
+  </header>
+
+  <section>
+    <h2>Words</h2>
+    <p class="blurb">
+      These are the base words that mods can have. A stat that rolled up differs from one that rolled down.
+      A mod that changes nothing in a fight (a slot expander) contributes no word at all.
+    </p>
+    <div class="cols">
+      <div>
+        <h3>Stat rolled up</h3>
+        <table><tr><td class="src"><span class="w">Damage</span></td><td class="arw">&rarr;</td><td class="res">Heavy</td></tr>
+<tr><td class="src"><span class="w">Radius</span></td><td class="arw">&rarr;</td><td class="res">Broad</td></tr>
+<tr><td class="src"><span class="w">Range</span></td><td class="arw">&rarr;</td><td class="res">Sniping</td></tr></table>
+      </div>
+      <div>
+        <h3>Stat rolled down</h3>
+        <table><tr><td class="src"><span class="w">Damage</span></td><td class="arw">&rarr;</td><td class="res">Blunted</td></tr>
+<tr><td class="src"><span class="w">Radius</span></td><td class="arw">&rarr;</td><td class="res">Focused</td></tr>
+<tr><td class="src"><span class="w">Range</span></td><td class="arw">&rarr;</td><td class="res">Snubbed</td></tr></table>
+      </div>
+      <div>
+        <h3>Status effect</h3>
+        <table><tr><td class="src"><span class="w">Poison</span></td><td class="arw">&rarr;</td><td class="res">Toxic</td></tr>
+<tr><td class="src"><span class="w">Burn</span></td><td class="arw">&rarr;</td><td class="res">Burning</td></tr>
+<tr><td class="src"><span class="w">Shock</span></td><td class="arw">&rarr;</td><td class="res">Shocking</td></tr>
+<tr><td class="src"><span class="w">Freeze</span></td><td class="arw">&rarr;</td><td class="res">Frigid</td></tr>
+<tr><td class="src"><span class="w">Bleed</span></td><td class="arw">&rarr;</td><td class="res">Rending</td></tr>
+<tr><td class="src"><span class="w">Corrode</span></td><td class="arw">&rarr;</td><td class="res">Corrosive</td></tr>
+<tr><td class="src"><span class="w">Blind</span></td><td class="arw">&rarr;</td><td class="res">Blinding</td></tr>
+<tr><td class="src"><span class="w">Slow</span></td><td class="arw">&rarr;</td><td class="res">Sluggish</td></tr></table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Within one mod <span class="count">11</span></h2>
+    <p class="blurb">
+      One mod can roll several stats at once. Those fuse into a single word on the mod itself, which
+      prevents long stacks on mods the same way it does on abilities.
+    </p>
+    <table><tr><td class="src"><span class="w">Blunted</span><span class="w">Broad</span></td><td class="arw">&rarr;</td><td class="res">Diffuse</td></tr>
+<tr><td class="src"><span class="w">Blunted</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Ranging</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Heavy</span></td><td class="arw">&rarr;</td><td class="res">Devastating</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Sweeping</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Snubbed</span></td><td class="arw">&rarr;</td><td class="res">Smothering</td></tr>
+<tr><td class="src"><span class="w">Focused</span><span class="w">Heavy</span></td><td class="arw">&rarr;</td><td class="res">Lancing</td></tr>
+<tr><td class="src"><span class="w">Focused</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Needling</td></tr>
+<tr><td class="src"><span class="w">Heavy</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Piercing</td></tr>
+<tr><td class="src"><span class="w">Heavy</span><span class="w">Snubbed</span></td><td class="arw">&rarr;</td><td class="res">Brutal</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Heavy</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Apocalyptic</td></tr>
+<tr><td class="src"><span class="w">Focused</span><span class="w">Heavy</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Executioner&#x27;s</td></tr></table>
+  </section>
+
+  <section>
+    <h2>Across the stack <span class="count">31</span></h2>
+    <p class="blurb">
+      Once every mod has its word, the same merge runs again over the whole set. This pass sees the stat
+      table too. <code>Heavy</code> and <code>Sniping</code> can arrive from one mod that rolled both, or from
+      two separate mods, and either way they should give the same name. Where both tables define a
+      combination, the cross-stack entry wins.
+    </p>
+    <table><tr><td class="src"><span class="w">Blinding</span><span class="w">Burning</span></td><td class="arw">&rarr;</td><td class="res">Flashburn</td></tr>
+<tr><td class="src"><span class="w">Blunted</span><span class="w">Broad</span></td><td class="arw">&rarr;</td><td class="res">Diffuse</td></tr>
+<tr><td class="src"><span class="w">Blunted</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Ranging</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Burning</span></td><td class="arw">&rarr;</td><td class="res">Immolating</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Heavy</span></td><td class="arw">&rarr;</td><td class="res">Devastating</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Sweeping</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Snubbed</span></td><td class="arw">&rarr;</td><td class="res">Smothering</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Miasmic</td></tr>
+<tr><td class="src"><span class="w">Burning</span><span class="w">Corrosive</span></td><td class="arw">&rarr;</td><td class="res">Incendiary</td></tr>
+<tr><td class="src"><span class="w">Burning</span><span class="w">Frigid</span></td><td class="arw">&rarr;</td><td class="res">Thermobaric</td></tr>
+<tr><td class="src"><span class="w">Burning</span><span class="w">Heavy</span></td><td class="arw">&rarr;</td><td class="res">Smouldering</td></tr>
+<tr><td class="src"><span class="w">Burning</span><span class="w">Shocking</span></td><td class="arw">&rarr;</td><td class="res">Plasmic</td></tr>
+<tr><td class="src"><span class="w">Burning</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Phlogiston</td></tr>
+<tr><td class="src"><span class="w">Corrosive</span><span class="w">Shocking</span></td><td class="arw">&rarr;</td><td class="res">Electrolytic</td></tr>
+<tr><td class="src"><span class="w">Corrosive</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Virulent</td></tr>
+<tr><td class="src"><span class="w">Focused</span><span class="w">Heavy</span></td><td class="arw">&rarr;</td><td class="res">Lancing</td></tr>
+<tr><td class="src"><span class="w">Focused</span><span class="w">Shocking</span></td><td class="arw">&rarr;</td><td class="res">Arclance</td></tr>
+<tr><td class="src"><span class="w">Focused</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Needling</td></tr>
+<tr><td class="src"><span class="w">Frigid</span><span class="w">Heavy</span></td><td class="arw">&rarr;</td><td class="res">Glacial</td></tr>
+<tr><td class="src"><span class="w">Frigid</span><span class="w">Shocking</span></td><td class="arw">&rarr;</td><td class="res">Superconductive</td></tr>
+<tr><td class="src"><span class="w">Frigid</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Cryotoxic</td></tr>
+<tr><td class="src"><span class="w">Heavy</span><span class="w">Shocking</span></td><td class="arw">&rarr;</td><td class="res">Thunderous</td></tr>
+<tr><td class="src"><span class="w">Heavy</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Piercing</td></tr>
+<tr><td class="src"><span class="w">Heavy</span><span class="w">Snubbed</span></td><td class="arw">&rarr;</td><td class="res">Brutal</td></tr>
+<tr><td class="src"><span class="w">Heavy</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Envenomed</td></tr>
+<tr><td class="src"><span class="w">Rending</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Septic</td></tr>
+<tr><td class="src"><span class="w">Shocking</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Galvanic</td></tr>
+<tr><td class="src"><span class="w">Sluggish</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Paralytic</td></tr>
+<tr><td class="src"><span class="w">Sniping</span><span class="w">Toxic</span></td><td class="arw">&rarr;</td><td class="res">Blightcaster</td></tr>
+<tr><td class="src"><span class="w">Broad</span><span class="w">Heavy</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Apocalyptic</td></tr>
+<tr><td class="src"><span class="w">Focused</span><span class="w">Heavy</span><span class="w">Sniping</span></td><td class="arw">&rarr;</td><td class="res">Executioner&#x27;s</td></tr></table>
+  </section>
+
+  <footer>Alpha, still being added to.</footer>
+</div>
+
+</body>
+</html>
