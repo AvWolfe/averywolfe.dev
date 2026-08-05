@@ -80,7 +80,9 @@
       text-transform: uppercase;
       letter-spacing: var(--label-track);
     }
-    .label { color: var(--muted); }
+    /* Section eyebrows carry the amber trim, same as the group headers inside the command
+       list — otherwise the accent doesn't appear until halfway down the page. */
+    .label { color: var(--amber); }
 
     /* ---------- hero ---------- */
     .hero {
@@ -181,7 +183,9 @@
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
       gap: 1rem;
     }
-    .caption b { color: var(--fg); font-weight: 600; }
+    /* Clip titles are the only recurring accent in the shots grid — without them that whole
+       block reads as greyscale. Set to var(--fg) to take the colour back out. */
+    .caption b { color: var(--amber); font-weight: 600; }
     .soon { color: var(--muted); font-weight: 400; font-size: 0.6em; letter-spacing: 0.04em; }
     /* The mono note role: sentence case, barely tracked. Shared with the footer. */
     .caption, footer {
@@ -238,7 +242,7 @@
     }
     .slots h4 {
       margin: 0 0 0.5rem;
-      font-size: 1.05rem; font-weight: 650; color: var(--fg);
+      font-size: 1.05rem; font-weight: 650; color: var(--amber);
     }
     /* The count is a quantity, not part of the name: smaller and quieter. */
     .slots h4 span { font-size: 0.78rem; font-weight: 400; color: var(--muted); margin-left: 0.35rem; }
@@ -478,7 +482,7 @@
         <p>Fires when its holder dies. A revive, or a grenade that takes the room with it.</p>
       </li>
     </ul>
-    <p class="dim" style="margin-bottom: 3.5rem;">Every combination of installed mods resolves to a name — <a href="#">the full table is here.</a></p>
+    <p style="margin-bottom: 3.5rem;">Every combination of installed mods resolves to a name — <a href="#">the full table is here.</a></p>
 
     <div class="row flip">
       <div class="copy">
@@ -518,7 +522,7 @@
           exchange is the real thing: the full vector draw surface, the game's own palette and live entity
           state, and a genuine reference to the HUD it wants to replace.
         </p>
-        <p class="dim">
+        <p>
           The readout here is one of those mods, in a single file. It hides the stock health and energy bars
           and draws a patient monitor in their place — pulse rate climbing and the beat weakening as health
           drops, shield as the canopy over the trace, energy as discrete charge cells. Nothing in the game
@@ -547,7 +551,7 @@
           is fully visible — you can check exactly how an action now impacts your turn order. When spending
           energy, an arrow shows where you'll be placed in the timeline.
         </p>
-        <p class="dim" style="margin-bottom:0.6rem">Under the hood:</p>
+        <p class="label" style="margin-bottom:0.7rem">Details</p>
         <ul class="underhood">
           <li><b>Pathfinding &amp; Sight.</b> A* pathfinding accounts for unit collision sizes, paired with a
             distinct line-of-sight grid so characters don't block ranged attacks the way solid walls do.</li>
@@ -581,7 +585,7 @@
       <div><span class="p">&gt;</span> <span class="c">scannerTheft true</span> <span class="n">// allows the scanner to loot entities while they are still alive, gated by cheat mode for debugging</span></div>
     </div>
 
-    <p class="dim" style="margin-top:1.3rem">
+    <p style="margin-top:1.3rem">
       <code>delay</code> is unique in that it has to be chained via <code>&amp;&amp;</code> — it delays the
       chained command by x seconds. Chaining also allows passing the same value to two commands, for example
       <code>cheatMode &amp;&amp; scannerTheft true</code>.
