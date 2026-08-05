@@ -22,6 +22,20 @@
       --red:     #ff3359;   /* Color(1.0, 0.2, 0.35)  */
       --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
       --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+      /* ---- shared scale ----------------------------------------------------------------
+         Two mono roles and one secondary copy size, so the same idiom isn't written six
+         slightly different ways. Change a value here and every use of it follows.
+           label  = uppercase, tracked  (section labels, chips, table keys)
+           note   = sentence case, mono (captions, footer)
+      */
+      --radius:     3px;    /* panels: media slots, console, cards */
+      --radius-sm:  2px;    /* inline: code, chips */
+      --label:      0.7rem;
+      --label-track: 0.16em;
+      --note:       0.72rem;
+      --note-track: 0.04em;
+      --small:      0.94rem;  /* secondary body copy */
     }
 
     * { box-sizing: border-box; }
@@ -59,13 +73,14 @@
     a { color: var(--amber); text-underline-offset: 3px; }
     a:hover { color: #e8a05c; }
 
-    .label {
+    /* The shared label role: mono, uppercase, tracked. */
+    .label, .status, .cmds summary, .cmds h4, .links span, .media.empty::after {
       font-family: var(--mono);
-      font-size: 0.7rem;
+      font-size: var(--label);
       text-transform: uppercase;
-      letter-spacing: 0.18em;
-      color: var(--muted);
+      letter-spacing: var(--label-track);
     }
+    .label { color: var(--muted); }
 
     /* ---------- hero ---------- */
     .hero {
@@ -97,13 +112,11 @@
 
     .status {
       display: inline-flex; align-items: center; gap: 0.5rem;
-      font-family: var(--mono); font-size: 0.7rem;
-      text-transform: uppercase; letter-spacing: 0.16em;
       color: var(--amber);
       border: 1px solid rgba(204,128,51,0.35);
       background: rgba(204,128,51,0.07);
       padding: 0.3rem 0.7rem;
-      border-radius: 2px;
+      border-radius: var(--radius-sm);
     }
     .status::before {
       content: ""; width: 6px; height: 6px; border-radius: 50%;
@@ -123,7 +136,7 @@
       max-width: 34rem;
       margin: 0 0 1.6rem;
     }
-    .byline { color: var(--muted); font-size: 0.95rem; margin: 0; }
+    .byline { color: var(--muted); font-size: var(--small); margin: 0; }
 
     /* ---------- sections ---------- */
     section { padding: 5.5rem 0; border-bottom: 1px solid var(--line); }
@@ -145,7 +158,7 @@
       position: relative;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 3px;
+      border-radius: var(--radius);
       overflow: hidden;
       aspect-ratio: 16 / 9;
     }
@@ -157,8 +170,6 @@
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       text-align: center; padding: 1rem;
-      font-family: var(--mono); font-size: 0.7rem;
-      letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--muted);
       background:
               repeating-linear-gradient(45deg, rgba(124,136,164,0.05) 0 10px, transparent 10px 20px);
@@ -172,7 +183,12 @@
     }
     .caption b { color: var(--fg); font-weight: 600; }
     .soon { color: var(--muted); font-weight: 400; font-size: 0.6em; letter-spacing: 0.04em; }
-    .caption { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.55rem; letter-spacing: 0.04em; line-height: 1.5; }
+    /* The mono note role: sentence case, barely tracked. Shared with the footer. */
+    .caption, footer {
+      font-family: var(--mono); font-size: var(--note);
+      letter-spacing: var(--note-track); color: var(--muted);
+    }
+    .caption { margin-top: 0.55rem; line-height: 1.5; }
     .shot { margin: 0; }
 
     /* ---------- feature rows ---------- */
@@ -192,8 +208,8 @@
 
     .traits { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.1rem; padding: 0; list-style: none; }
     .traits li {
-      font-family: var(--mono); font-size: 0.72rem;
-      border: 1px solid var(--line); border-radius: 2px;
+      font-family: var(--mono); font-size: var(--note);
+      border: 1px solid var(--line); border-radius: var(--radius-sm);
       padding: 0.2rem 0.5rem; color: var(--muted);
     }
     .traits li.hot { color: var(--red); border-color: rgba(255,51,89,0.3); }
@@ -202,12 +218,12 @@
     code {
       font-family: var(--mono); font-size: 0.85em;
       background: var(--panel); border: 1px solid var(--line);
-      padding: 0.08em 0.35em; border-radius: 2px;
+      padding: 0.08em 0.35em; border-radius: var(--radius-sm);
     }
 
     /* ---------- slot cards (loadout breakdown) ----------
-       Amber-bordered boxes in the same language as the .status pill: main slots across
-       one row of three, system slots in a 2x2 block beneath them. */
+       The same surface as .console / .media: main slots across one row of three,
+       system slots in a 2x2 block beneath them. */
     .slots {
       list-style: none; margin: 0 0 2.4rem; padding: 0;
       display: grid; gap: 1rem;
@@ -215,11 +231,9 @@
     .slots.main   { grid-template-columns: repeat(3, 1fr); }
     .slots.system { grid-template-columns: repeat(2, 1fr); }
     .slots li {
-      /* Same box as .console / .media: panel fill, hairline border, 3px radius.
-         Swap the border colour for var(--line) to drop the amber accent entirely. */
       background: var(--panel);
-      border: 1px solid rgba(204,128,51,0.32);
-      border-radius: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
       padding: 1.1rem 1.25rem;
     }
     .slots h4 {
@@ -228,14 +242,14 @@
     }
     /* The count is a quantity, not part of the name: smaller and quieter. */
     .slots h4 span { font-size: 0.78rem; font-weight: 400; color: var(--muted); margin-left: 0.35rem; }
-    .slots p { margin: 0; color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
+    .slots p { margin: 0; color: var(--muted); font-size: var(--small); line-height: 1.6; }
     @media (max-width: 800px) {
       .slots.main, .slots.system { grid-template-columns: 1fr; }
     }
 
     .underhood { list-style: none; margin: 0; padding: 0; }
     .underhood li {
-      color: var(--muted); font-size: 0.95rem; line-height: 1.6;
+      color: var(--muted); font-size: var(--small); line-height: 1.6;
       padding-left: 0.9rem; margin-bottom: 0.6rem; position: relative;
     }
     .underhood li::before {
@@ -248,7 +262,7 @@
     .console {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 3px;
+      border-radius: var(--radius);
       padding: 1.1rem 1.25rem;
       font-family: var(--mono);
       font-size: 0.8rem;
@@ -266,8 +280,6 @@
       cursor: pointer;
       list-style: none;
       padding: 0.9rem 0;
-      font-family: var(--mono); font-size: 0.72rem;
-      text-transform: uppercase; letter-spacing: 0.16em;
       color: var(--muted);
     }
     .cmds summary::-webkit-details-marker { display: none; }
@@ -276,8 +288,7 @@
     .cmds summary:hover { color: var(--fg); }
 
     .cmds h4 {
-      font-family: var(--mono); font-size: 0.68rem; font-weight: 400;
-      text-transform: uppercase; letter-spacing: 0.16em;
+      font-weight: 400;
       color: var(--amber);
       margin: 1.5rem 0 0.7rem;
     }
@@ -288,9 +299,9 @@
       margin: 0;
     }
     .cmds dt { font-family: var(--mono); font-size: 0.78rem; color: var(--fg); }
-    .cmds dd { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+    .cmds dd { margin: 0; color: var(--muted); font-size: var(--small); line-height: 1.5; }
     .cmds dd code { font-size: 0.8em; }
-    .cmds .note { color: var(--muted); font-size: 0.88rem; margin: 0; }
+    .cmds .note { color: var(--muted); font-size: var(--small); margin: 0; }
     @media (max-width: 640px) {
       .cmds dl { grid-template-columns: 1fr; gap: 0.1rem; }
       .cmds dd { margin-bottom: 0.8rem; }
@@ -304,16 +315,11 @@
     .links li { margin-bottom: 0.55rem; }
     .links span {
       display: inline-block; width: 5rem;
-      font-family: var(--mono); font-size: 0.68rem;
-      text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted);
+      color: var(--muted);
     }
 
     footer {
       padding: 2.5rem 0 4rem;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
       display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
     }
   </style>
@@ -425,7 +431,7 @@
       <div class="copy">
         <h3>Augments that name themselves</h3>
         <p>
-          Mods slot into ability augments, which slot into the character. An augment rolls with base stats and is upgraded with mods for extra stats, status effects, or expansion chips that add more slots. An expansion chip has to go in a base slot rather than another expansion slot — that restriction is what stops mod chips stacking forever.
+          Mods slot into ability augments, which slot into the character. An augment rolls with base stats and takes mods on top: extra stats, status effects, or expansion chips that add more slots. An expansion chip has to go in a base slot rather than another expansion slot, which is what prevents infinite mod stacking.
         </p>
         <p>
           Names are built from what's installed. Each mod contributes exactly one word — more damage is <code>Heavy</code>, more range is <code>Sniping</code> — those words fuse across the stack, and the whole thing is capped at two. So <code>Light Shot</code> with a range mod becomes <code>Sniping Light Shot</code>; stack a damage mod on top and the pair fuses into <code>Piercing Light Shot</code>.
@@ -449,7 +455,7 @@
       </li>
       <li>
         <h4>Item <span>×4</span></h4>
-        <p>Stimpacks, scanners, energy restores. Four per battle, not four kinds: equip four stimpacks and you get four uses, so the slot count is the budget.</p>
+        <p>Stimpacks, scanners, energy restores. Four per battle — equip four stimpacks and you get four uses.</p>
       </li>
     </ul>
 
@@ -488,10 +494,10 @@
         </ul>
         <p>
           Every unit runs the same planner: score the available moves, the lines of sight, the abilities, pick
-          the best one, repeat until the turn is spent. Traits reweight that scorer rather than branching it,
-          so a <code>Cowardly</code> unit and a <code>Berserker</code> read an identical board and reach
-          different conclusions. Traits that need genuinely different behaviour, rather than different
-          priorities, are still being wired in.
+          the best one, repeat until the turn is spent. Traits reweight that scorer rather than branching it —
+          a <code>Cowardly</code> unit and a <code>Berserker</code> score the same board with different
+          weights, so they land on different actions. Traits that need genuinely different behavior, rather
+          than different priorities, are still being wired in.
         </p>
         <p><a href="/ai-traits.html">The full trait list &rarr;</a></p>
       </div>
