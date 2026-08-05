@@ -325,9 +325,15 @@
       color: var(--muted);
     }
 
-    footer {
-      padding: 2.5rem 0 4rem;
-      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    footer { padding: 2.5rem 0 4rem; }
+    footer .wrap {
+      display: flex; flex-wrap: wrap; justify-content: space-between;
+      align-items: baseline; gap: 0.5rem 1.5rem;
+    }
+    /* Below this the two spans can't share a line without the long one collapsing into a
+       column, so stack them instead of letting them fight for the width. */
+    @media (max-width: 700px) {
+      footer .wrap { flex-direction: column; gap: 0.35rem; }
     }
   </style>
 </head>
@@ -700,7 +706,7 @@
 </section>
 
 <footer>
-  <div class="wrap" style="width: 100%; display: flex; justify-content: space-between;">
+  <div class="wrap">
     <span>Untitled — Avery Wolfe &amp; Brian Tambascio — alpha, no release date</span>
     <span>&copy; 2026 Avery Wolfe</span>
   </div>

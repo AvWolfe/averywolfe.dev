@@ -131,5 +131,21 @@
   <footer>Alpha, still being added to.</footer>
 </div>
 
+
+<script>
+  // Prefer a real history back over following the href: the browser restores the scroll position
+  // you left the index at, which a fresh navigation to "/" can't do. Only when we actually arrived
+  // from this site and there IS somewhere to go back to — a bookmark, a search hit or a new tab
+  // falls through to the href and loads the index normally.
+  document.querySelectorAll("a.back").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var sameOrigin = false;
+      try { sameOrigin = !!document.referrer && new URL(document.referrer).origin === location.origin; }
+      catch (err) { sameOrigin = false; }
+      if (sameOrigin && history.length > 1) { e.preventDefault(); history.back(); }
+    });
+  });
+</script>
+
 </body>
 </html>

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Enemy AI traits — At Great Cost</title>
-<meta name="description" content="The 31 traits that reweight enemy decision-making in At Great Cost.">
+<title>Enemy AI traits</title>
+<meta name="description" content="The 31 traits that reweight enemy decision-making.">
 <style>
   :root {
     --void:#050810; --panel:#0b1020; --line:#1b2338;
@@ -71,7 +71,7 @@
 
 <div class="wrap">
   <header>
-    <a class="back" href="/">&larr; At Great Cost</a>
+    <a class="back" href="/">&larr; Back</a>
     <h1>Enemy AI traits</h1>
     <p class="lede">
       Every unit in the game runs the same planner. It scores the moves available to it, the lines of sight
@@ -263,8 +263,24 @@
     </dl>
   </section>
 
-  <footer>At Great Cost — alpha. Traits are still being added and tuned.</footer>
+  <footer>Alpha — traits are still being added and tuned.</footer>
 </div>
+
+
+<script>
+  // Prefer a real history back over following the href: the browser restores the scroll position
+  // you left the index at, which a fresh navigation to "/" can't do. Only when we actually arrived
+  // from this site and there IS somewhere to go back to — a bookmark, a search hit or a new tab
+  // falls through to the href and loads the index normally.
+  document.querySelectorAll("a.back").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var sameOrigin = false;
+      try { sameOrigin = !!document.referrer && new URL(document.referrer).origin === location.origin; }
+      catch (err) { sameOrigin = false; }
+      if (sameOrigin && history.length > 1) { e.preventDefault(); history.back(); }
+    });
+  });
+</script>
 
 </body>
 </html>
