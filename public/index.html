@@ -311,6 +311,9 @@
       .cmds dd { margin-bottom: 0.8rem; }
     }
 
+    #story-media { aspect-ratio: 16 / 9; }
+    #story-media video { width: 100%; height: 100%; display: block; }
+
     /* ---------- about ---------- */
     .about { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
     @media (max-width: 800px) { .about { grid-template-columns: 1fr; gap: 2rem; } }
@@ -346,12 +349,12 @@
   </div>
 </header>
 
-<section id="trailer" data-hide-when-empty>
+<section id="trailer">
   <div class="wrap">
     <span class="label">Gameplay</span>
     <h2>See it move</h2>
-    <div class="media empty" data-slot="media/trailer.mp4">
-      <video controls preload="metadata" poster="media/trailer-poster.jpg">
+    <div class="media">
+      <video controls playsinline preload="none" poster="media/trailer-poster.jpg">
         <source src="media/trailer.mp4" type="video/mp4">
       </video>
     </div>
@@ -440,6 +443,7 @@
         <p>
           Names are built from what's installed. Each mod contributes exactly one word — more damage is <code>Heavy</code>, more range is <code>Sniping</code> — those words fuse across the stack, and the whole thing is capped at two. So <code>Light Shot</code> with a range mod becomes <code>Sniping Light Shot</code>; stack a damage mod on top and the pair fuses into <code>Piercing Light Shot</code>.
         </p>
+        <p><a href="/augment-names.html">Every word and every fusion &rarr;</a></p>
       </div>
       <div class="media empty" data-slot="media/clip-augment-naming.mp4">
         <video autoplay muted loop playsinline poster="media/clip-augment-naming.jpg">
@@ -652,7 +656,26 @@
   </div>
 </section>
 
-<section id="about">
+<section id="story">
+    <div class="wrap">
+      <span class="label">Story</span>
+      <h2>Why he's out there</h2>
+      <p class="lede narrow">
+        <!-- REPLACE: Avery + Brian's blurb goes here. Two or three sentences setting up who Dawkins is
+             and what he chose to do, so this scene reads as a premise rather than a violent clip. -->
+        Dawkins is serving his sentence on a prison work tour at the edge of settled space. This is the
+        thing he was sentenced for.
+      </p>
+      <div class="media" id="story-media">
+        <video controls playsinline muted preload="none" poster="media/story.jpg">
+          <source src="media/story.mp4" type="video/mp4">
+        </video>
+      </div>
+      <p class="caption">An early flashback. Written by Brian Tambascio.</p>
+    </div>
+  </section>
+
+  <section id="about">
   <div class="wrap">
     <span class="label">Who</span>
     <h2>Avery Wolfe</h2>
