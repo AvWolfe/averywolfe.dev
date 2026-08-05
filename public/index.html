@@ -79,6 +79,9 @@
   .hero .bg {
     position: absolute; inset: 0;
     background: var(--panel) center/cover no-repeat;
+    /* It borrows .media for the missing-file placeholder, but must fill the hero rather than
+       take .media's 16/9 — otherwise the splash stops short of the copy on narrow screens. */
+    aspect-ratio: auto;
   }
   .hero .bg img, .hero .bg video {
     width: 100%; height: 100%; object-fit: cover; display: block;
@@ -167,6 +170,8 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: 1rem;
   }
+  .caption b { color: var(--fg); font-weight: 600; }
+  .soon { color: var(--muted); font-weight: 400; font-size: 0.6em; letter-spacing: 0.04em; }
   .caption { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.55rem; letter-spacing: 0.04em; line-height: 1.5; }
   .shot { margin: 0; }
 
@@ -198,6 +203,70 @@
     font-family: var(--mono); font-size: 0.85em;
     background: var(--panel); border: 1px solid var(--line);
     padding: 0.08em 0.35em; border-radius: 2px;
+  }
+
+
+  .underhood { list-style: none; margin: 0; padding: 0; }
+  .underhood li {
+    color: var(--muted); font-size: 0.95rem; line-height: 1.6;
+    padding-left: 0.9rem; margin-bottom: 0.6rem; position: relative;
+  }
+  .underhood li::before {
+    content: ""; position: absolute; left: 0; top: 0.65em;
+    width: 4px; height: 4px; background: var(--amber); border-radius: 50%;
+  }
+  .underhood b { color: var(--fg); font-weight: 600; }
+
+  /* ---------- console ---------- */
+  .console {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1.1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 2;
+    overflow-x: auto;
+  }
+  .console div { white-space: nowrap; }
+  .console .p { color: var(--amber); user-select: none; }
+  .console .c { color: var(--fg); }
+  .console .n { color: var(--muted); }
+
+  /* ---------- command list (collapsed by default) ---------- */
+  .cmds { margin-top: 1.8rem; border-top: 1px solid var(--line); }
+  .cmds summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 0.9rem 0;
+    font-family: var(--mono); font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+  .cmds summary::-webkit-details-marker { display: none; }
+  .cmds summary::before { content: "+\00a0\00a0"; color: var(--amber); }
+  .cmds[open] summary::before { content: "\2212\00a0\00a0"; }
+  .cmds summary:hover { color: var(--fg); }
+
+  .cmds h4 {
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--amber);
+    margin: 1.5rem 0 0.7rem;
+  }
+  .cmds dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.5rem 1.4rem;
+    margin: 0;
+  }
+  .cmds dt { font-family: var(--mono); font-size: 0.78rem; color: var(--fg); }
+  .cmds dd { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+  .cmds dd code { font-size: 0.8em; }
+  .cmds .note { color: var(--muted); font-size: 0.88rem; margin: 0; }
+  @media (max-width: 640px) {
+    .cmds dl { grid-template-columns: 1fr; gap: 0.1rem; }
+    .cmds dd { margin-bottom: 0.8rem; }
   }
 
   /* ---------- about ---------- */
@@ -241,9 +310,9 @@
   <div class="inner">
     <div class="wrap">
       <span class="status">Alpha · untitled</span>
-      <h1>Every turn spends<br>something you needed.</h1>
-      <p class="kicker">A turn-based tactics game built around energy-ordered turns and augment
-        loadouts. In development, and still looking for its name.</p>
+      <h1>Sci-Fi Tactical RPG</h1>
+      <p class="kicker">Built around energy-ordered turns and augment loadouts.
+        In development, and still looking for its name.</p>
       <p class="byline">Built in Godot 4 and C# by <a href="#about">Avery Wolfe</a> (code, gameplay design)
         and Brian Tambascio (story, art).</p>
     </div>
@@ -266,35 +335,60 @@
 <section id="shots" data-hide-when-empty>
   <div class="wrap">
     <span class="label">In motion</span>
-    <h2>Systems, moving</h2>
+    <h2>Current Player Augments <span class="soon">(more to come)</span></h2>
     <p class="lede narrow dim">
-      Short loops rather than screenshots — most of what's interesting here is a thing changing, not a
-      thing sitting still.
+      All actions take energy to use, including moving. Turn order is decided on who gets to 100% energy
+      first, so ending a turn early means your next turn comes faster. However, ending a turn with more
+      than 80% energy will cap you to 80%, to prevent same-turn spamming.
     </p>
     <div class="shots">
 
       <figure class="shot">
-        <div class="media empty" data-slot="media/clip-augment-naming.mp4">
-          <video autoplay muted loop playsinline poster="media/clip-augment-naming.jpg">
-            <source src="media/clip-augment-naming.mp4" type="video/mp4"></video>
+        <div class="media empty" data-slot="media/clip-light-shot.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-light-shot.jpg">
+            <source src="media/clip-light-shot.mp4" type="video/mp4"></video>
         </div>
-        <figcaption class="caption">Mods going in and out. The name rebuilds itself each time.</figcaption>
+        <figcaption class="caption"><b>Light Shot</b><br>The basic shot. Free aim with line of sight — obstacles and other entities will block it.</figcaption>
       </figure>
 
       <figure class="shot">
-        <div class="media empty" data-slot="media/clip-ability.mp4">
-          <video autoplay muted loop playsinline poster="media/clip-ability.jpg">
-            <source src="media/clip-ability.mp4" type="video/mp4"></video>
+        <div class="media empty" data-slot="media/clip-scatter-shot.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-scatter-shot.jpg">
+            <source src="media/clip-scatter-shot.mp4" type="video/mp4"></video>
         </div>
-        <figcaption class="caption">An ability resolving — targeting, cost, hit.</figcaption>
+        <figcaption class="caption"><b>Scatter Shot</b><br>A multi-shot blast, though it's RNG, so the pellets may or may not hit the targets inside the cone.</figcaption>
       </figure>
 
       <figure class="shot">
-        <div class="media empty" data-slot="media/clip-colliders.mp4">
-          <video autoplay muted loop playsinline poster="media/clip-colliders.jpg">
-            <source src="media/clip-colliders.mp4" type="video/mp4"></video>
+        <div class="media empty" data-slot="media/clip-rail-shot.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-rail-shot.jpg">
+            <source src="media/clip-rail-shot.mp4" type="video/mp4"></video>
         </div>
-        <figcaption class="caption">Walking the map with collision shapes drawn.</figcaption>
+        <figcaption class="caption"><b>Rail Shot</b><br>High energy cost beam that pierces through multiple entities and ticks damage rather than single-source damage.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="media empty" data-slot="media/clip-explosive-grenade.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-explosive-grenade.jpg">
+            <source src="media/clip-explosive-grenade.mp4" type="video/mp4"></video>
+        </div>
+        <figcaption class="caption"><b>Explosive Grenade</b><br>Two throws at different ranges. Damage falls off from the centre of the blast.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="media empty" data-slot="media/clip-emp-grenade.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-emp-grenade.jpg">
+            <source src="media/clip-emp-grenade.mp4" type="video/mp4"></video>
+        </div>
+        <figcaption class="caption"><b>EMP Grenade</b><br>EMP grenades damage energy, which provides turn order manipulation.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="media empty" data-slot="media/clip-stat-scanner.mp4">
+          <video autoplay muted loop playsinline poster="media/clip-stat-scanner.jpg">
+            <source src="media/clip-stat-scanner.mp4" type="video/mp4"></video>
+        </div>
+        <figcaption class="caption"><b>Stat Scanner</b><br>Scanner lets you see the AI's stats, augments, and AiTraits. AiTraits can help you determine how the AI will behave.</figcaption>
       </figure>
 
     </div>
@@ -331,7 +425,10 @@
           blast that takes the room with it. Getting hurt and getting killed are both things you can build for.
         </p>
       </div>
-      <div class="media empty" data-slot="media/system-augments.jpg"><img src="media/system-augments.jpg" alt="Augment loadout screen"></div>
+      <div class="media empty" data-slot="media/clip-augment-naming.mp4">
+        <video autoplay muted loop playsinline poster="media/clip-augment-naming.jpg">
+          <source src="media/clip-augment-naming.mp4" type="video/mp4"></video>
+      </div>
     </div>
     <div class="row flip">
       <div class="copy">
@@ -365,26 +462,145 @@
           without a restart.
         </p>
         <p>
+          A C# mod defines no engine node of its own. It registers plain callbacks — <code>RegisterDraw</code>,
+          <code>RegisterTick</code>, <code>RegisterAbility</code>, <code>RegisterAi</code> — and the game
+          drives them, which is what lets the whole assembly unload cleanly on every reload. What it gets in
+          exchange is the real thing: the full vector draw surface, the game's own palette and live entity
+          state, and a genuine reference to the HUD it wants to replace.
+        </p>
+        <p class="dim">
+          The readout here is one of those mods, in a single file. It hides the stock health and energy bars
+          and draws a patient monitor in their place — pulse rate climbing and the beat weakening as health
+          drops, shield as the canopy over the trace, energy as discrete charge cells. Nothing in the game
+          changed to allow it.
+        </p>
+        <p>
           That loader is open source as
           <a href="https://github.com/AvWolfe/GodotModKit">GodotModKit</a>, usable in any Godot 4 .NET
           project, MIT licensed.
         </p>
       </div>
-      <div class="media empty" data-slot="media/system-mods.jpg"><img src="media/system-mods.jpg" alt="Modding tools"></div>
+      <div class="media empty" data-slot="media/system-mods.jpg"><img src="media/system-mods.jpg" alt="A mod replacing the player's health and energy bars with an ECG-style vitals monitor"></div>
     </div>
     <div class="row flip">
       <div class="copy">
         <h3>The rest of it</h3>
         <p>
-          Turn order runs on energy rather than initiative, and the timeline is readable ahead of time —
-          you can see what spending an ability now costs you three turns out, before you commit to it.
-          Underneath that: A* pathfinding with per-unit clearance, a separate line-of-sight grid so bodies
-          don't block shots the way terrain does, a day and night cycle, input rebinding driven by data
-          rather than a hardcoded map, and a HUD drawn in code so a mod can reskin it.
+          Movement shifts the moment a fight starts. Outside of combat, you just use WASD to explore
+          freely, using a standard sorting layer so your character walks behind objects instead of floating
+          over them. Once you enter combat, it switches to point-and-click movement restricted to a
+          reachable radius dictated by your energy. Every step you take trades off directly against the
+          abilities you're trying to save up for.
         </p>
+        <p>
+          Turn order runs off this same energy pool instead of a typical initiative roll, and the timeline
+          is fully visible — you can check exactly how an action now impacts your turn order. When spending
+          energy, an arrow shows where you'll be placed in the timeline.
+        </p>
+        <p class="dim" style="margin-bottom:0.6rem">Under the hood:</p>
+        <ul class="underhood">
+          <li><b>Pathfinding &amp; Sight.</b> A* pathfinding accounts for unit collision sizes, paired with a
+            distinct line-of-sight grid so characters don't block ranged attacks the way solid walls do.</li>
+          <li><b>Systems.</b> A full day/night cycle and data-driven input rebinding (no hardcoded key maps).</li>
+          <li><b>Mod Support.</b> The HUD is rendered entirely in code, making it easy for mods to completely
+            reskin the UI.</li>
+        </ul>
       </div>
-      <div class="media empty" data-slot="media/shot-05.jpg"><img src="media/shot-05.jpg" alt="Gameplay screenshot"></div>
+      <div class="media empty" data-slot="media/clip-overworld.mp4">
+        <video autoplay muted loop playsinline poster="media/clip-overworld.jpg">
+          <source src="media/clip-overworld.mp4" type="video/mp4"></video>
+      </div>
     </div>
+  </div>
+</section>
+
+<section id="tooling">
+  <div class="wrap">
+    <span class="label">Tooling</span>
+    <h2>A console, because six hours of testing is six hours of setup</h2>
+    <p class="lede narrow dim">
+      Thirty-odd commands for putting the game into a specific state without playing your way there — spawn
+      entities, hand out augments and mods, move the day/night cycle, then capture the result. It's a debug
+      utility first, so anything that changes gameplay or breaks progression is gated behind
+      <code>CheatMode</code>. The clips further up this page were set up with these.
+    </p>
+
+    <div class="console">
+      <div><span class="p">&gt;</span> <span class="c">CheatMode true</span>  <span class="n">// the gate — most of the list is behind it</span></div>
+      <div><span class="p">&gt;</span> <span class="c">Spawn player Human Rebel 200</span>  <span class="n">// a player-side human, faction Rebel, 200px out</span></div>
+      <div><span class="p">&gt;</span> <span class="c">CheatMode true &amp;&amp; give augment lightShot damage=15</span>  <span class="n">// any stat on an augment can be set inline</span></div>
+      <div><span class="p">&gt;</span> <span class="c">setTime dusk &amp;&amp; camera bind Dawkins</span>  <span class="n">// set the light, then follow a unit</span></div>
+      <div><span class="p">&gt;</span> <span class="c">delay 3 &amp;&amp; kill hostiles</span>  <span class="n">// the rest of the chain runs after the wait</span></div>
+      <div><span class="p">&gt;</span> <span class="c">resurrect dawkins 40</span>  <span class="n">// back up at 40 health; omit the number for full</span></div>
+      <div><span class="p">&gt;</span> <span class="c">CheatMode &amp;&amp; ScannerTheft true</span>  <span class="n">// one argument, borrowed by both — scanner loots the living</span></div>
+      <div><span class="p">&gt;</span> <span class="c">screenshot clean</span>  <span class="n">// PNG with the dev readout out of frame; F12 does the same</span></div>
+      <div><span class="p">&gt;</span> <span class="c">record start 30</span>  <span class="n">// frame sequence, muxed to mp4 on stop</span></div>
+    </div>
+
+    <p class="dim" style="margin-top:1.3rem">
+      <code>delay</code> is unique as it requires to be chained via <code>&amp;&amp;</code>, it delays the
+      chained command by x seconds; Chaining also allows passing the same value to two commands, for example
+      <code>cheatmode &amp;&amp; scannertheft true</code>
+    </p>
+
+    <details class="cmds">
+      <summary>All thirty-two commands</summary>
+
+      <h4>The gate</h4>
+      <dl>
+        <dt>CheatMode</dt><dd>Unlock everything that changes gameplay or skips progression.</dd>
+        <dt>ScannerTheft</dt><dd>Let the scanner loot entities that are still alive.</dd>
+      </dl>
+
+      <h4>Entities</h4>
+      <dl>
+        <dt>Spawn</dt><dd>Place an entity, optionally player-side, with factions, N px out —
+          <code>Spawn player Human Rebel 200</code>.</dd>
+        <dt>give</dt><dd>Hand a unit an augment, mod chip or item; any stat can be set inline.
+          <code>give -examples</code> for the forms.</dd>
+        <dt>kill</dt><dd>Kill a unit or a group — <code>kill dawkins</code>, <code>kill hostiles</code>.</dd>
+        <dt>resurrect</dt><dd>Revive a fallen unit at N health, or full health if the number is left off.</dd>
+        <dt>setTurn</dt><dd>Hand the current turn to a named unit.</dd>
+        <dt>TickStatus</dt><dd>Advance status effects one tick, on a unit, a group, or all.</dd>
+        <dt>SetName</dt><dd>Rename the active unit, or one named explicitly.</dd>
+        <dt>Scanner</dt><dd>Fire the stat scanner on the next player turn.</dd>
+        <dt>Unstuck</dt><dd>Move the active entity to the nearest open position.</dd>
+      </dl>
+
+      <h4>Stats</h4>
+      <p class="note">
+        Eight setters generated from one registration, all shaped
+        <code>set&lt;stat&gt; [name|all|allies|hostiles] &lt;value&gt;</code> — health, maxHealth, energy,
+        maxEnergy, shield, maxShield, speed, moveEfficiency.
+      </p>
+
+      <h4>World and time</h4>
+      <dl>
+        <dt>setTime</dt><dd>Move the day/night cycle by hour or by name — <code>0–24</code>, day, noon,
+          dusk, night, dawn.</dd>
+        <dt>timeScale</dt><dd>Engine time scale, 0.0 to 10.0.</dd>
+        <dt>pause</dt><dd>Freeze time. Same as <code>timeScale 0</code>.</dd>
+        <dt>resume</dt><dd>Restore the time scale from before the pause.</dd>
+      </dl>
+
+      <h4>View and capture</h4>
+      <dl>
+        <dt>camera</dt><dd><code>camera bind &lt;name&gt;</code> follows a unit, in or out of battle.</dd>
+        <dt>screenshot</dt><dd>PNG of the frame. <code>clean</code> drops the dev readout, <code>bare</code>
+          the whole HUD; the console panel always goes.</dd>
+        <dt>record</dt><dd>Frame sequence at a set rate and scale, muxed to mp4 on stop.</dd>
+      </dl>
+
+      <h4>The console itself</h4>
+      <dl>
+        <dt>mods</dt><dd>List, reload, enable or disable the loaded C# mods.</dd>
+        <dt>help</dt><dd>Every command, or the usage of one.</dd>
+        <dt>delay</dt><dd>Run the rest of the chain after N seconds. Only meaningful chained.</dd>
+        <dt>echo</dt><dd>Print the given text.</dd>
+        <dt>clear</dt><dd>Clear the output.</dd>
+        <dt>close</dt><dd>Close the console.</dd>
+      </dl>
+    </details>
   </div>
 </section>
 
