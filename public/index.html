@@ -9,8 +9,12 @@
   <meta property="og:description" content="Built around energy-ordered turns and augment loadouts. In development, and still looking for its name.">
   <meta property="og:image" content="https://averywolfe.dev/media/hero.jpg">
   <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#050810">
   <style>
-    /* Palette lifted from the game's own HUD constants. */
+    /* Palette from the game's own HUD constants. */
     :root {
       --void:    #050810;   /* HUD backdrop, Color(0.02, 0.03, 0.05) */
       --panel:   #0b1020;
@@ -25,7 +29,7 @@
 
       /* ---- shared scale ----------------------------------------------------------------
          Two mono roles and one secondary copy size, so the same idiom isn't written six
-         slightly different ways. Change a value here and every use of it follows.
+         slightly different ways.
            label  = uppercase, tracked  (section labels, chips, table keys)
            note   = sentence case, mono (captions, footer)
       */
@@ -50,7 +54,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Faint scanlines, echoing the game's CRT shader. Delete this block to remove. */
+    /* Faint scanlines, echoing the game's CRT shader. */
     body::after {
       content: "";
       position: fixed;
@@ -73,15 +77,12 @@
     a { color: var(--amber); text-underline-offset: 3px; }
     a:hover { color: #e8a05c; }
 
-    /* The shared label role: mono, uppercase, tracked. */
     .label, .status, .cmds summary, .cmds h4, .links span, .media.empty::after {
       font-family: var(--mono);
       font-size: var(--label);
       text-transform: uppercase;
       letter-spacing: var(--label-track);
     }
-    /* Section eyebrows carry the amber trim, same as the group headers inside the command
-       list — otherwise the accent doesn't appear until halfway down the page. */
     .label { color: var(--amber); }
 
     /* ---------- hero ---------- */
@@ -96,8 +97,6 @@
     .hero .bg {
       position: absolute; inset: 0;
       background: var(--panel) center/cover no-repeat;
-      /* It borrows .media for the missing-file placeholder, but must fill the hero rather than
-         take .media's 16/9 — otherwise the splash stops short of the copy on narrow screens. */
       aspect-ratio: auto;
     }
     .hero .bg img, .hero .bg video {
@@ -436,7 +435,7 @@
     <span class="label">Under the hood</span>
     <h2>Systems, mostly</h2>
     <p class="lede narrow dim">
-      Roughly 74,000 lines of C# across 500 source files, all of it mine — I'm the only engineer on the
+      Roughly 74,000 lines of C# across 200 source files. I'm the only engineer on the
       project. Most of it is machinery the player never sees directly.
     </p>
 
@@ -447,7 +446,7 @@
           Mods slot into ability augments, which slot into the character. An augment rolls with base stats and takes mods on top: extra stats, status effects, or expansion chips that add more slots. An expansion chip has to go in a base slot rather than another expansion slot, which is what prevents infinite mod stacking.
         </p>
         <p>
-          Names are built from what's installed. Each mod contributes exactly one word — more damage is <code>Heavy</code>, more range is <code>Sniping</code> — those words fuse across the stack, and the whole thing is capped at two. So <code>Light Shot</code> with a range mod becomes <code>Sniping Light Shot</code>; stack a damage mod on top and the pair fuses into <code>Piercing Light Shot</code>.
+          Names are built from what's installed. Each mod contributes exactly one word, more damage is <code>Heavy</code>, more range is <code>Sniping</code>, those words fuse across the stack, and the whole thing is capped at two. So <code>Light Shot</code> with a range mod becomes <code>Sniping Light Shot</code>; stack a damage mod on top and the pair fuses into <code>Piercing Light Shot</code>.
         </p>
         <p><a href="/augment-names.html">Every word and every fusion &rarr;</a></p>
       </div>
@@ -481,11 +480,11 @@
       </li>
       <li>
         <h4>Support</h4>
-        <p>Adjusts base stats: Max HP, Max Shields, Max Energy, and Speed — how much energy you gain per tick. Some reduce Max Energy, which means fewer actions per turn but turns that come around faster. Stacked with Speed, that's a real build.</p>
+        <p>Adjusts base stats: Max HP, Max Shields, Max Energy, and Speed (how much energy you gain per tick). Some reduce Max Energy, which means fewer actions per turn but turns that come around faster. Low Energy and High Speed make for fast turn cycles.</p>
       </li>
       <li>
         <h4>Reaction</h4>
-        <p>Fires when its holder is hit and survives. You can put a Light Shot here and shoot the attacker back, but an ability used as a reaction still costs energy, so it delays your own turn. Dedicated reaction augments are free.</p>
+        <p>Fires when its holder is hit and survives. For example, you could put a Light Shot here and shoot the attacker back, but an ability used as a reaction still costs energy, so it delays your own turn. Dedicated reaction augments are free.</p>
       </li>
       <li>
         <h4>Failsafe</h4>
@@ -508,10 +507,10 @@
         </ul>
         <p>
           Every unit runs the same planner: score the available moves, the lines of sight, the abilities, pick
-          the best one, repeat until the turn is spent. Traits reweight that scorer rather than branching it —
-          a <code>Cowardly</code> unit and a <code>Berserker</code> score the same board with different
+          the best one, repeat until the turn is spent. Traits reweight that scorer,
+          a <code>Cowardly</code> unit and a <code>Berserker</code> score the same with different
           weights, so they land on different actions. Traits that need genuinely different behavior, rather
-          than different priorities, are still being wired in.
+          than different priorities, are still being wired in, like <code>Loyalist</code>.
         </p>
         <p><a href="/ai-traits.html">The full trait list &rarr;</a></p>
       </div>
@@ -522,21 +521,21 @@
         <h3>Modding as a first-class path</h3>
         <p>
           Two tiers. Sandboxed JavaScript for interface work, and full-access C# plugin assemblies for
-          everything else. The C# tier hot-reloads: rebuild a mod while the game is running and it swaps in
-          without a restart.
+          everything else. The C# tier hot-reloads: rebuild a mod while the game is running, and it swaps in
+          without a restart. If you create a mod via Godot that creates a pck file, a game restart is required.
         </p>
         <p>
-          A C# mod defines no engine node of its own. It registers plain callbacks — <code>RegisterDraw</code>,
-          <code>RegisterTick</code>, <code>RegisterAbility</code>, <code>RegisterAi</code> — and the game
-          drives them, which is what lets the whole assembly unload cleanly on every reload. What it gets in
-          exchange is the real thing: the full vector draw surface, the game's own palette and live entity
+          A C# mod defines no engine node of its own. It registers plain callbacks, <code>RegisterDraw</code>,
+          <code>RegisterTick</code>, <code>RegisterAbility</code>, <code>RegisterAi</code>, and the game
+          drives them, which is what lets the whole assembly unload cleanly on every reload. This allows for
+          the full vector draw surface, the game's own palette and live entity
           state, and a genuine reference to the HUD it wants to replace.
         </p>
         <p>
           The readout here is one of those mods, in a single file. It hides the stock health and energy bars
           and draws a patient monitor in their place — pulse rate climbing and the beat weakening as health
           drops, shield as the canopy over the trace, energy as discrete charge cells. Nothing in the game
-          changed to allow it.
+          changed to allow it and can be disabled via console commands.
         </p>
         <p>
           That loader is open source as
@@ -550,24 +549,25 @@
       <div class="copy">
         <h3>The rest of it</h3>
         <p>
-          Movement shifts the moment a fight starts. Outside of combat, you just use WASD to explore
+          Movement works different in and out of combat. Outside of combat, you just use WASD to explore
           freely, using a standard sorting layer so your character walks behind objects instead of floating
           over them. Once you enter combat, it switches to point-and-click movement restricted to a
-          reachable radius dictated by your energy. Every step you take trades off directly against the
-          abilities you're trying to save up for.
+          reachable radius dictated by your energy and movement augment.
+          Because of this, moving too far can drain your energy too much. Because of this, I do plan on adding
+          some QoL systems to let players reset their movement and plan attacks.
         </p>
         <p>
           Turn order runs off this same energy pool instead of a typical initiative roll, and the timeline
-          is fully visible — you can check exactly how an action now impacts your turn order. When spending
+          is fully visible, you can check exactly how an action now impacts your turn order. When spending
           energy, an arrow shows where you'll be placed in the timeline.
         </p>
         <p class="label" style="margin-bottom:0.7rem">Details</p>
         <ul class="underhood">
           <li><b>Pathfinding &amp; Sight.</b> A* pathfinding accounts for unit collision sizes, paired with a
-            distinct line-of-sight grid so characters don't block ranged attacks the way solid walls do.</li>
+            distinct line-of-sight grid for attacks.</li>
           <li><b>Systems.</b> A full day/night cycle and data-driven input rebinding (no hardcoded key maps).</li>
           <li><b>Mod Support.</b> The HUD is rendered entirely in code, making it easy for mods to completely
-            reskin the UI.</li>
+            reskin the UI. I aim to make the game as modular as possible.</li>
         </ul>
       </div>
       <div class="media empty" data-slot="media/clip-overworld.mp4">
@@ -596,8 +596,8 @@
     </div>
 
     <p style="margin-top:1.3rem">
-      <code>delay</code> is unique in that it has to be chained via <code>&amp;&amp;</code> — it delays the
-      chained command by x seconds. Chaining also allows passing the same value to two commands, for example
+      <code>delay</code> is unique in that it has to be chained via <code>&amp;&amp;</code>, it delays the
+      chained command by <code>n</code>> seconds. Chaining also allows passing the same value to two commands, for example
       <code>cheatMode &amp;&amp; scannerTheft true</code>.
     </p>
 
@@ -636,9 +636,9 @@
       <dl>
         <dt>setTime</dt><dd>Move the day/night cycle by hour or by name — <code>0–24</code>, day, noon,
         dusk, night, dawn.</dd>
-        <dt>timeScale</dt><dd>Engine time scale, 0.0 to 10.0.</dd>
+        <dt>timeScale</dt><dd>Engine time-scale, 0.0 to 10.0.</dd>
         <dt>pause</dt><dd>Freeze time. Same as <code>timeScale 0</code>.</dd>
-        <dt>resume</dt><dd>Restore the time scale from before the pause.</dd>
+        <dt>resume</dt><dd>Restore the time-scale from before the pause.</dd>
       </dl>
 
       <h4>View and capture</h4>
@@ -667,8 +667,6 @@
       <span class="label">Story</span>
       <h2>Why he's out there</h2>
       <p class="lede narrow">
-        <!-- REPLACE: Avery + Brian's blurb goes here. Two or three sentences setting up who Dawkins is
-             and what he chose to do, so this scene reads as a premise rather than a violent clip. -->
         Dawkins is serving his sentence on a prison work tour at the edge of settled space. This is the
         thing he was sentenced for.
       </p>
@@ -688,10 +686,10 @@
     <div class="about">
       <div>
         <p>
-          I'm a developer in Seattle. B.A. Computer Science, University of Iowa, 2024. I've been building the game since 2023 with Brian Tambascio, who writes the story and makes the art — I write all of the code and design how it plays. Alongside eight years in security operations.
+          I'm a developer in Seattle. B.A. Computer Science, University of Iowa, 2024. I've been building the game since 2023 with Brian Tambascio, who writes the story and makes the art. I write all the code and design how it plays. Alongside eight years in security operations.
         </p>
         <p>
-          Comfortable in C#, Java, Python, Rust, C and C++. Most at home in the middle of a system that has grown complicated enough to need a real design instead of another special case.
+          Comfortable in C#, Java, Python, and a bit of C/C++.
         </p>
       </div>
       <div>
@@ -717,8 +715,7 @@
   function fill(slot) { slot.classList.remove('empty'); prune(); }
 
   // A section marked data-hide-when-empty disappears entirely while none of its media exist, so an
-  // unfinished section is absent rather than showing a grid of placeholders. It comes back on its own
-  // the moment a file is dropped in — no markup change needed.
+  // unfinished section is absent rather than showing a grid of placeholders.
   function prune() {
     document.querySelectorAll('section[data-hide-when-empty]').forEach(function (sec) {
       var slots = sec.querySelectorAll('.media');
