@@ -18,7 +18,10 @@
     --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--void); color:var(--fg); font:16px/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
+  /* One fluid root size scales type, spacing and the column together on large displays:
+     16px up to a 1600px viewport, growing to 20px by 2560px. Matches index.html. */
+  html { font-size: clamp(16px, calc(0.4167vw + 9.33px), 20px); }
+  body { margin:0; background:var(--void); color:var(--fg); font:1rem/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
   body::after {
     content:""; position:fixed; inset:0; pointer-events:none; z-index:100;
     background: repeating-linear-gradient(to bottom, rgba(255,255,255,.016) 0 1px, transparent 1px 3px);

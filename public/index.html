@@ -44,13 +44,19 @@
 
     * { box-sizing: border-box; }
 
-    html { scroll-behavior: smooth; }
+    /* Everything below is sized in rem, so the root size is the one knob that scales type,
+       spacing and the content column together. Holds at 16px up to a 1600px viewport, then
+       grows to 20px by 2560px — otherwise the page sits as a small ribbon on a large display. */
+    html {
+      scroll-behavior: smooth;
+      font-size: clamp(16px, calc(0.4167vw + 9.33px), 20px);
+    }
 
     body {
       margin: 0;
       background: var(--void);
       color: var(--fg);
-      font: 16px/1.7 var(--sans);
+      font: 1rem/1.7 var(--sans);
       -webkit-font-smoothing: antialiased;
     }
 
