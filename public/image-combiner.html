@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image combiner</title>
+<meta name="description" content="Stitch photos into one image — horizontal, vertical or grid. Runs entirely in your browser. No uploads, no ads, no fake progress bar.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#050810">
+<style>
+  :root {
+    --void:#050810; --panel:#0b1020; --line:#1b2338;
+    --fg:#dfe4ee; --muted:#7c88a4;
+    --amber:#cc8033; --blue:#4a8cff; --red:#ff3359; --violet:#9b6bd8;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  /* One fluid root size scales type, spacing and the column together on large displays:
+     16px up to a 1600px viewport, growing to 20px by 2560px. Matches index.html. */
+  html { font-size: clamp(16px, calc(0.4167vw + 9.33px), 20px); }
+  body { margin:0; background:var(--void); color:var(--fg); font:1rem/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
+  body::after {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:100;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.016) 0 1px, transparent 1px 3px);
+  }
+  @media (prefers-reduced-motion: reduce) { body::after { display:none; } }
+
+  .wrap { max-width:62rem; margin:0 auto; padding:0 1.5rem; }
+  a { color:var(--amber); text-underline-offset:3px; }
+  a:hover { color:#e8a05c; }
+
+  header { padding:4rem 0 2.5rem; border-bottom:1px solid var(--line); }
+  .back { font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; }
+  h1 { font-size:clamp(2rem,5vw,3rem); letter-spacing:-.03em; margin:1.2rem 0 .8rem; font-weight:700; }
+  .lede { max-width:44rem; font-size:1.05rem; margin:0 0 1rem; }
+  .lede + .lede { color:var(--muted); }
+
+  section { padding:2.75rem 0; border-bottom:1px solid var(--line); }
+  section:last-of-type { border-bottom:0; }
+  h2 {
+    font-size:.78rem; text-transform:uppercase; letter-spacing:.16em;
+    font-family:var(--mono); color:var(--muted); font-weight:600;
+    margin:0 0 .35rem; display:flex; align-items:center; gap:.6rem;
+  }
+  .count {
+    font-size:.68rem; color:var(--void); background:var(--muted);
+    border-radius:10px; padding:.05rem .45rem; letter-spacing:.04em;
+  }
+  .blurb { color:var(--muted); margin:0 0 1.4rem; font-size:.95rem; }
+
+  /* ---- drop zone ---- */
+  .drop {
+    border:1px dashed var(--line); border-radius:3px; background:var(--panel);
+    padding:2.25rem 1.5rem; text-align:center; transition:border-color .12s, background .12s;
+  }
+  .drop.over { border-color:var(--amber); background:#0e1428; }
+  .drop p { margin:.6rem 0 0; color:var(--muted); font-size:.9rem; }
+
+  .btn {
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--fg); background:#131a2e; border:1px solid var(--line); border-radius:2px;
+    padding:.6rem 1.1rem; cursor:pointer; transition:border-color .12s, color .12s;
+  }
+  .btn:hover:not(:disabled) { border-color:var(--amber); color:var(--amber); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btn.primary { border-color:var(--amber); color:var(--amber); }
+  .btn.primary:hover:not(:disabled) { background:#1a1206; }
+  .btn.ghost { background:transparent; }
+
+  /* ---- thumbnails ---- */
+  .thumbs { display:flex; flex-wrap:wrap; gap:.7rem; margin:1.4rem 0 0; padding:0; list-style:none; }
+  .thumb {
+    width:9.5rem; background:var(--panel); border:1px solid var(--line); border-radius:2px;
+    padding:.45rem; position:relative;
+  }
+  .thumb.dragging { opacity:.35; }
+  .thumb.dropbefore { border-left-color:var(--amber); box-shadow:-2px 0 0 var(--amber); }
+  .thumb img {
+    width:100%; height:5.5rem; object-fit:contain; display:block;
+    background:repeating-conic-gradient(#151b2d 0 25%, #0d1322 0 50%) 0 0/14px 14px;
+    border-radius:2px; cursor:grab;
+  }
+  .thumb .meta {
+    font-family:var(--mono); font-size:.6rem; color:var(--muted); letter-spacing:.04em;
+    margin-top:.4rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .thumb .idx { color:var(--amber); }
+  .thumb .row { display:flex; gap:.25rem; margin-top:.35rem; }
+  .thumb .row button {
+    flex:1; font-family:var(--mono); font-size:.7rem; line-height:1; padding:.3rem 0;
+    color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:2px; cursor:pointer;
+  }
+  .thumb .row button:hover:not(:disabled) { color:var(--fg); border-color:var(--muted); }
+  .thumb .row button:disabled { opacity:.3; cursor:not-allowed; }
+  .thumb .row button.rm:hover { color:var(--red); border-color:var(--red); }
+
+  /* ---- controls ---- */
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr)); gap:1.4rem 2rem; }
+  .field { min-width:0; }
+  .label {
+    display:block; font-family:var(--mono); font-size:.68rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 .5rem;
+  }
+  .hint { font-size:.8rem; color:var(--muted); margin:.5rem 0 0; }
+  .hint.warn { color:var(--amber); }
+
+  .seg { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .seg label { position:relative; }
+  .seg input { position:absolute; opacity:0; width:0; height:0; }
+  .seg span {
+    display:block; font-family:var(--mono); font-size:.7rem; letter-spacing:.08em;
+    padding:.45rem .8rem; border:1px solid var(--line); border-radius:2px;
+    background:var(--panel); color:var(--muted); cursor:pointer; user-select:none;
+  }
+  .seg label:hover span { color:var(--fg); }
+  .seg input:checked + span { border-color:var(--amber); color:var(--amber); background:#160f05; }
+  .seg input:focus-visible + span { outline:2px solid var(--blue); outline-offset:2px; }
+
+  .inline { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .check { display:flex; align-items:center; gap:.5rem; cursor:pointer; font-size:.9rem; }
+  .check input { accent-color:var(--amber); width:1rem; height:1rem; }
+
+  input[type=number] {
+    font-family:var(--mono); font-size:.85rem; width:5.5rem;
+    background:var(--panel); color:var(--fg); border:1px solid var(--line);
+    border-radius:2px; padding:.4rem .5rem;
+  }
+  input[type=color] {
+    width:2.6rem; height:2.1rem; padding:2px; background:var(--panel);
+    border:1px solid var(--line); border-radius:2px; cursor:pointer;
+  }
+  input:disabled { opacity:.4; }
+  input:focus-visible { outline:2px solid var(--blue); outline-offset:1px; }
+  .unit { font-family:var(--mono); font-size:.72rem; color:var(--muted); }
+
+  fieldset { border:0; padding:0; margin:0; min-width:0; }
+  fieldset:disabled .label, fieldset:disabled .hint { opacity:.45; }
+  fieldset:disabled .seg span { opacity:.45; cursor:not-allowed; }
+
+  /* ---- output ---- */
+  .outbar { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:0 0 1.2rem; }
+  .dims { font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; color:var(--muted); }
+  .stage {
+    background:var(--panel); border:1px solid var(--line); border-radius:3px;
+    padding:1rem; min-height:6rem; display:flex; align-items:center; justify-content:center;
+    /* Lifted over the fixed scanline overlay (z-index 100). The rest of the page can keep the
+       CRT look; a photo you are judging shouldn't be seen through a grille. */
+    position:relative; z-index:101;
+  }
+  .stage img { max-width:100%; height:auto; display:block; -webkit-touch-callout:default; }
+  .stage img[hidden] { display:none; }   /* the rule above outranks the browser's own [hidden] */
+  .stage .empty { color:var(--muted); font-size:.9rem; font-family:var(--mono); letter-spacing:.06em; }
+
+  /* Only worth saying on a device that can actually long-press. */
+  .touchhint { display:none; }
+  @media (hover: none) and (pointer: coarse) { .touchhint.on { display:block; } }
+
+  footer {
+    padding:2.5rem 0 4rem; color:var(--muted);
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.08em;
+  }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="back" href="/">&larr; Back</a>
+    <h1>Image combiner</h1>
+    <p class="lede">
+      Drop in photos, pick a layout, get one image back. Horizontal, vertical or a grid, with an
+      optional border and two ways of dealing with photos that aren't the same size.
+    </p>
+    <p class="lede">
+      Everything runs in this tab — nothing is uploaded anywhere, there is no queue, and there is no
+      progress bar pretending the work is hard. The picture appears the moment you change a setting.
+    </p>
+  </header>
+
+  <section>
+    <h2>Photos <span class="count" id="countBadge">0</span></h2>
+    <p class="blurb">Drop them anywhere on the page, paste from the clipboard, or browse. Drag a thumbnail to reorder.</p>
+
+    <div class="drop" id="drop">
+      <button class="btn primary" type="button" id="pick">Choose photos</button>
+      <p>…or drag them here. JPEG, PNG, GIF, WebP, AVIF — whatever your browser can decode.</p>
+      <input class="sr" type="file" id="file" accept="image/*" multiple>
+    </div>
+
+    <ul class="thumbs" id="thumbs"></ul>
+    <p class="hint" id="loadErr" hidden></p>
+    <p class="hint" id="clearWrap" hidden><button class="btn ghost" type="button" id="clear">Remove all</button></p>
+  </section>
+
+  <section>
+    <h2>Layout</h2>
+    <p class="blurb">Grid fills left to right, top to bottom, in the order the thumbnails are in.</p>
+
+    <div class="controls">
+      <div class="field">
+        <span class="label">Arrangement</span>
+        <div class="seg" role="radiogroup" aria-label="Arrangement">
+          <label><input type="radio" name="layout" value="h" checked><span>Horizontal</span></label>
+          <label><input type="radio" name="layout" value="v"><span>Vertical</span></label>
+          <label><input type="radio" name="layout" value="g"><span>Grid</span></label>
+        </div>
+      </div>
+
+      <fieldset class="field" id="gridFields" disabled>
+        <span class="label">Grid size</span>
+        <div class="inline">
+          <label class="unit">Columns <input type="number" id="cols" min="1" value="2"></label>
+          <label class="unit">Rows <input type="number" id="rows" min="1" value="1"></label>
+        </div>
+        <p class="hint" id="gridHint">Add photos first.</p>
+      </fieldset>
+
+      <div class="field">
+        <span class="label">Sizing</span>
+        <div class="seg" role="radiogroup" aria-label="Sizing">
+          <label><input type="radio" name="fit" value="free" checked><span>Free style</span></label>
+          <label><input type="radio" name="fit" value="align"><span>Proper align</span></label>
+        </div>
+        <p class="hint" id="fitHint"></p>
+      </div>
+
+      <div class="field">
+        <span class="label">Border</span>
+        <div class="inline">
+          <label class="check"><input type="checkbox" id="borderOn" checked> Add a border</label>
+          <input type="number" id="borderW" min="0" value="20" aria-label="Border width in pixels">
+          <span class="unit">px</span>
+          <input type="color" id="color" value="#ffffff" aria-label="Border and background colour">
+        </div>
+        <p class="hint">The colour also fills any gap left by a photo that doesn't fill its slot.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Result</h2>
+    <div class="outbar">
+      <button class="btn primary" type="button" id="save" disabled>Download PNG</button>
+      <button class="btn" type="button" id="saveJpg" disabled>Download JPEG</button>
+      <span class="dims" id="dims">—</span>
+    </div>
+    <p class="hint warn" id="outWarn" hidden></p>
+    <div class="stage" id="stage">
+      <span class="empty" id="stageEmpty">No photos yet</span>
+      <img id="out" alt="The combined image" hidden>
+    </div>
+    <p class="hint touchhint" id="touchHint">Press and hold the image to save it straight to your photos.</p>
+  </section>
+
+  <footer>Local, adless, and honest about how long stitching two JPEGs takes.</footer>
+</div>
+
+<script>
+  // Everything here is deliberately client-side: files are decoded, drawn to a canvas and handed
+  // back as a download. No network calls, so there is nothing to wait on and nothing to fake.
+
+  var MAX_SIDE = 16384;      // beyond this most browsers refuse to allocate the canvas
+  var BIG_AREA = 40e6;       // past this it still works but is slow, and can fail on phones
+
+  var items = [];            // { id, name, src (ImageBitmap|Image), w, h, url }
+  var uid = 0;
+  var cols = 2;              // source of truth for the grid; rows are derived from it
+
+  var $ = function (id) { return document.getElementById(id); };
+  var els = {
+    drop: $('drop'), pick: $('pick'), file: $('file'), thumbs: $('thumbs'),
+    countBadge: $('countBadge'), loadErr: $('loadErr'), clearWrap: $('clearWrap'), clear: $('clear'),
+    gridFields: $('gridFields'), cols: $('cols'), rows: $('rows'), gridHint: $('gridHint'),
+    fitHint: $('fitHint'), borderOn: $('borderOn'), borderW: $('borderW'), color: $('color'),
+    save: $('save'), saveJpg: $('saveJpg'), dims: $('dims'), outWarn: $('outWarn'),
+    stage: $('stage'), stageEmpty: $('stageEmpty'), out: $('out'), touchHint: $('touchHint')
+  };
+
+  // The canvas is never in the page — it is only the surface everything is drawn on. What the
+  // page shows is an <img> of the finished result, so a long press offers the phone's own save.
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+
+  function layoutMode() { return document.querySelector('input[name=layout]:checked').value; }
+  function fitMode() { return document.querySelector('input[name=fit]:checked').value; }
+  function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
+
+  /* ------------------------------------------------------------------ loading */
+
+  // createImageBitmap honours the EXIF rotation phones bake into JPEGs; the <img> path is a
+  // fallback for browsers that don't have it (and it rotates on its own anyway).
+  function decode(file) {
+    if (window.createImageBitmap) {
+      return createImageBitmap(file, { imageOrientation: 'from-image' })
+        .catch(function () { return createImageBitmap(file); })
+        .catch(function () { return decodeViaImg(file); });
+    }
+    return decodeViaImg(file);
+  }
+
+  function decodeViaImg(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('decode failed')); };
+      img.src = url;
+    });
+  }
+
+  function addFiles(list) {
+    var files = Array.prototype.filter.call(list, function (f) { return /^image\//.test(f.type); });
+    if (!files.length) return;
+    var failed = [];
+    // Decoding runs in parallel but finishes out of order, so each photo goes into the slot it was
+    // picked in — a batch lands in the order you chose it, not the order the browser got through it.
+    var slots = new Array(files.length);
+    Promise.all(files.map(function (f, i) {
+      return decode(f).then(function (src) {
+        slots[i] = {
+          id: ++uid, name: f.name || 'pasted image', src: src,
+          w: src.width, h: src.height, url: URL.createObjectURL(f)
+        };
+      }, function () { failed.push(f.name || 'a file'); });
+    })).then(function () {
+      slots.forEach(function (it) { if (it) items.push(it); });
+      els.loadErr.hidden = !failed.length;
+      els.loadErr.textContent = failed.length ? "Couldn't read " + failed.join(', ') + '.' : '';
+      syncGrid();
+      paintThumbs();
+      render();
+    });
+  }
+
+  function removeAt(i) {
+    URL.revokeObjectURL(items[i].url);
+    if (items[i].src.close) items[i].src.close();
+    items.splice(i, 1);
+    syncGrid(); paintThumbs(); render();
+  }
+
+  function move(from, to) {
+    if (to < 0 || to >= items.length || from === to) return;
+    items.splice(to, 0, items.splice(from, 1)[0]);
+    paintThumbs(); render();
+  }
+
+  /* ------------------------------------------------------------------ thumbnails */
+
+  function paintThumbs() {
+    els.thumbs.textContent = '';
+    els.countBadge.textContent = String(items.length);
+    els.clearWrap.hidden = !items.length;
+
+    items.forEach(function (it, i) {
+      var li = document.createElement('li');
+      li.className = 'thumb';
+      li.draggable = true;
+      li.dataset.i = String(i);
+
+      var img = document.createElement('img');
+      img.src = it.url;
+      img.alt = it.name;
+      li.appendChild(img);
+
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.innerHTML = '<span class="idx">' + (i + 1) + '</span> · ' + it.w + '×' + it.h;
+      meta.title = it.name + ' — ' + it.w + '×' + it.h;
+      li.appendChild(meta);
+
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.appendChild(btn('◀', 'Move earlier', i === 0, function () { move(i, i - 1); }));
+      row.appendChild(btn('▶', 'Move later', i === items.length - 1, function () { move(i, i + 1); }));
+      row.appendChild(btn('✕', 'Remove', false, function () { removeAt(i); }, 'rm'));
+      li.appendChild(row);
+
+      els.thumbs.appendChild(li);
+    });
+  }
+
+  function btn(label, title, disabled, onClick, cls) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    b.title = title;
+    b.setAttribute('aria-label', title);
+    b.disabled = disabled;
+    if (cls) b.className = cls;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  /* ------------------------------------------------------------------ grid bounds */
+
+  // Rows and columns are two views of the same split, and neither may promise more cells than the
+  // photos can fill: 5 photos can be 1–5 columns, and the row count follows from that.
+  // `editing` names the box the cursor is in, if any: that one is left alone so a half-typed
+  // number isn't rewritten under the caret. It gets tidied up on blur.
+  function syncGrid(editing) {
+    var n = items.length;
+    els.gridFields.disabled = layoutMode() !== 'g' || n === 0;
+    if (!n) {
+      els.cols.value = '1'; els.rows.value = '1';
+      els.gridHint.textContent = 'Add photos first.';
+      return;
+    }
+    cols = clamp(cols, 1, n);
+    var rows = Math.ceil(n / cols);
+    els.cols.max = String(n); els.rows.max = String(n);
+    if (editing !== 'cols') els.cols.value = String(cols);
+    if (editing !== 'rows') els.rows.value = String(rows);
+    var cells = rows * cols;
+    els.gridHint.textContent = rows + ' × ' + cols + ' — ' + cells + ' slot' + (cells === 1 ? '' : 's') +
+      ' for ' + n + ' photo' + (n === 1 ? '' : 's') +
+      (cells > n ? ', last ' + (cells - n) + ' left blank.' : '.');
+  }
+
+  /* ------------------------------------------------------------------ layout + draw */
+
+  // Every arrangement is the same grid underneath — horizontal is one row, vertical is one column —
+  // so one measuring pass covers all three.
+  function measure() {
+    var n = items.length;
+    if (!n) return null;
+
+    var mode = layoutMode();
+    var nCols = mode === 'h' ? n : mode === 'v' ? 1 : clamp(cols, 1, n);
+    var nRows = Math.ceil(n / nCols);
+    var align = fitMode() === 'align';
+    var gap = els.borderOn.checked ? Math.max(0, Math.floor(+els.borderW.value || 0)) : 0;
+
+    // Drawn size of each photo. Free style keeps every photo at its own pixel size; proper align
+    // scales them to match — to a common height in a row, a common width in a column, and to a
+    // common cell (letterboxed, never cropped) in a grid.
+    var box = items.map(function (it) { return { w: it.w, h: it.h }; });
+
+    if (align && mode === 'h') {
+      var tallest = Math.max.apply(null, items.map(function (it) { return it.h; }));
+      box = items.map(function (it) { return { w: it.w * tallest / it.h, h: tallest }; });
+    } else if (align && mode === 'v') {
+      var widest = Math.max.apply(null, items.map(function (it) { return it.w; }));
+      box = items.map(function (it) { return { w: widest, h: it.h * widest / it.w }; });
+    } else if (align) {
+      var cw = Math.max.apply(null, items.map(function (it) { return it.w; }));
+      var ch = Math.max.apply(null, items.map(function (it) { return it.h; }));
+      box = items.map(function (it) {
+        var s = Math.min(cw / it.w, ch / it.h);
+        return { w: it.w * s, h: it.h * s, cellW: cw, cellH: ch };
+      });
+    }
+
+    // Whole pixels from here on: a scaled photo that came out 199.6 wide is 200 everywhere, so a
+    // row of them can't leave hairline seams of background between the photos.
+    box = box.map(function (b) {
+      var r = { w: Math.max(1, Math.round(b.w)), h: Math.max(1, Math.round(b.h)) };
+      if (b.cellW) { r.cellW = Math.round(b.cellW); r.cellH = Math.round(b.cellH); }
+      return r;
+    });
+
+    // A column is as wide as its widest photo, a row as tall as its tallest. In align mode those
+    // come out equal, so the centring below is a no-op and nothing is left blank.
+    var colW = new Array(nCols).fill(0);
+    var rowH = new Array(nRows).fill(0);
+    box.forEach(function (b, i) {
+      var c = i % nCols, r = (i / nCols) | 0;
+      colW[c] = Math.max(colW[c], b.cellW || b.w);
+      rowH[r] = Math.max(rowH[r], b.cellH || b.h);
+    });
+
+    var colX = [], rowY = [], x = gap, y = gap, i;
+    for (i = 0; i < nCols; i++) { colX.push(x); x += colW[i] + gap; }
+    for (i = 0; i < nRows; i++) { rowY.push(y); y += rowH[i] + gap; }
+
+    return {
+      width: Math.round(x), height: Math.round(y),
+      nCols: nCols, nRows: nRows, box: box, colW: colW, rowH: rowH, colX: colX, rowY: rowY
+    };
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; draw(); });
+  }
+
+  function draw() {
+    var m = measure();
+    els.outWarn.hidden = true;
+
+    if (!m) {
+      clearPreview();
+      els.stageEmpty.textContent = 'No photos yet';
+      els.dims.textContent = '—';
+      els.save.disabled = els.saveJpg.disabled = true;
+      return;
+    }
+
+    if (m.width > MAX_SIDE || m.height > MAX_SIDE) {
+      clearPreview();
+      els.stageEmpty.textContent = 'Too big to draw: ' + m.width + ' × ' + m.height;
+      els.dims.textContent = m.width + ' × ' + m.height + ' px';
+      els.save.disabled = els.saveJpg.disabled = true;
+      els.outWarn.hidden = false;
+      els.outWarn.textContent = 'Browsers cap a canvas at ' + MAX_SIDE + 'px a side. Use fewer photos ' +
+        'per row, or switch to free style so nothing gets scaled up.';
+      return;
+    }
+
+    canvas.width = m.width;
+    canvas.height = m.height;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.fillStyle = els.color.value;
+    ctx.fillRect(0, 0, m.width, m.height);
+
+    items.forEach(function (it, i) {
+      var b = m.box[i];
+      var c = i % m.nCols, r = (i / m.nCols) | 0;
+      var dx = m.colX[c] + (m.colW[c] - b.w) / 2;
+      var dy = m.rowY[r] + (m.rowH[r] - b.h) / 2;
+      ctx.drawImage(it.src, Math.round(dx), Math.round(dy), Math.round(b.w), Math.round(b.h));
+    });
+
+    els.stageEmpty.hidden = true;
+    els.dims.textContent = m.width + ' × ' + m.height + ' px';
+    els.save.disabled = els.saveJpg.disabled = false;
+    showPreview();
+
+    if (m.width * m.height > BIG_AREA) {
+      els.outWarn.hidden = false;
+      els.outWarn.textContent = 'That is a ' + (m.width * m.height / 1e6).toFixed(0) +
+        ' megapixel image — fine here, but it may be slow to save on a phone.';
+    }
+  }
+
+  /* ------------------------------------------------------------------ preview */
+
+  // The result is shown as an <img>, and wherever it is small enough that <img> is fed a plain
+  // data: URL. Both parts matter on a phone: pressing and holding only offers "save to photos" on
+  // a real image — never on a canvas — and a self-contained data: URL is the form every browser
+  // is willing to hand over to the photo library.
+  var MAX_INLINE = 24 * 1024 * 1024;   // past this the base64 copy costs more than it is worth
+
+  var previewUrl = null, previewIsBlobUrl = false, previewBlob = null, previewToken = 0;
+
+  function clearPreview() {
+    previewToken++;
+    previewBlob = null;
+    if (previewIsBlobUrl && previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    previewIsBlobUrl = false;
+    els.out.removeAttribute('src');
+    els.out.removeAttribute('width');
+    els.out.removeAttribute('height');
+    els.out.hidden = true;
+    els.stageEmpty.hidden = false;
+    els.touchHint.classList.remove('on');
+  }
+
+  // Encoding is asynchronous, so a fast run of setting changes can finish out of order: only the
+  // newest one is allowed to reach the page. The replacement is loaded before it is swapped in, so
+  // the picture already up stays up until the new one can be painted. (Loading, unlike decoding,
+  // still happens in a tab you have switched away from, so a background render isn't left hanging.)
+  function swapPreview(token, w, h, blob, url, isBlobUrl) {
+    function drop() { if (isBlobUrl) URL.revokeObjectURL(url); }
+    if (token !== previewToken) { drop(); return; }
+
+    var next = new Image();
+    next.onerror = drop;
+    next.onload = function () {
+      if (token !== previewToken) { drop(); return; }
+      var staleUrl = previewUrl, staleIsBlobUrl = previewIsBlobUrl;
+      previewBlob = blob;
+      previewUrl = url;
+      previewIsBlobUrl = isBlobUrl;
+      els.out.width = w;            // reserves the right box before the swap, so nothing jumps
+      els.out.height = h;
+      els.out.src = url;
+      els.out.hidden = false;
+      els.touchHint.classList.add('on');
+      if (staleIsBlobUrl && staleUrl) URL.revokeObjectURL(staleUrl);
+    };
+    next.src = url;
+  }
+
+  function showPreview() {
+    var token = ++previewToken;
+    var w = canvas.width, h = canvas.height;
+    canvas.toBlob(function (blob) {
+      if (!blob || token !== previewToken) return;
+      if (blob.size > MAX_INLINE) {
+        swapPreview(token, w, h, blob, URL.createObjectURL(blob), true);
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () { swapPreview(token, w, h, blob, reader.result, false); };
+      reader.onerror = function () { swapPreview(token, w, h, blob, URL.createObjectURL(blob), true); };
+      reader.readAsDataURL(blob);
+    }, 'image/png');
+  }
+
+  /* ------------------------------------------------------------------ saving */
+
+  function save(type, ext) {
+    if (type === 'image/png' && previewBlob) { download(previewBlob, ext); return; }
+    canvas.toBlob(function (blob) {
+      if (blob) download(blob, ext);
+    }, type, type === 'image/jpeg' ? 0.92 : undefined);
+  }
+
+  function download(blob, ext) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'combined-' + Date.now() + '.' + ext;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  /* ------------------------------------------------------------------ wiring */
+
+  els.pick.addEventListener('click', function () { els.file.click(); });
+  els.file.addEventListener('change', function () { addFiles(els.file.files); els.file.value = ''; });
+  els.clear.addEventListener('click', function () {
+    while (items.length) removeAt(items.length - 1);
+  });
+
+  document.querySelectorAll('input[name=layout]').forEach(function (r) {
+    r.addEventListener('change', function () { syncGrid(); render(); });
+  });
+  document.querySelectorAll('input[name=fit]').forEach(function (r) {
+    r.addEventListener('change', function () { setFitHint(); render(); });
+  });
+
+  function setFitHint() {
+    els.fitHint.textContent = fitMode() === 'free'
+      ? 'Every photo keeps its own pixel size; a small one just sits in the gap, filled with the border colour.'
+      : 'Photos are scaled up to match the largest — same height in a row, same width in a column, same cell in a grid.';
+  }
+
+  els.cols.addEventListener('input', function () {
+    var n = items.length;
+    if (!n) return;
+    cols = clamp(Math.round(+els.cols.value || 1), 1, n);
+    syncGrid('cols'); render();
+  });
+  els.rows.addEventListener('input', function () {
+    var n = items.length;
+    if (!n) return;
+    var r = clamp(Math.round(+els.rows.value || 1), 1, n);
+    cols = clamp(Math.ceil(n / r), 1, n);   // snaps to the nearest split that actually holds them
+    syncGrid('rows'); render();
+  });
+  els.cols.addEventListener('change', function () { syncGrid(); });
+  els.rows.addEventListener('change', function () { syncGrid(); });
+
+  els.borderOn.addEventListener('change', function () {
+    els.borderW.disabled = !els.borderOn.checked;
+    render();
+  });
+  els.borderW.addEventListener('input', render);
+  els.color.addEventListener('input', render);
+
+  els.save.addEventListener('click', function () { save('image/png', 'png'); });
+  els.saveJpg.addEventListener('click', function () { save('image/jpeg', 'jpg'); });
+
+  /* ---- dropping files ---- */
+
+  function hasFiles(e) {
+    var t = e.dataTransfer && e.dataTransfer.types;
+    return !!t && Array.prototype.indexOf.call(t, 'Files') !== -1;
+  }
+
+  ['dragenter', 'dragover'].forEach(function (type) {
+    document.addEventListener(type, function (e) {
+      if (!hasFiles(e)) return;
+      e.preventDefault();                    // otherwise the browser navigates to the dropped file
+      e.dataTransfer.dropEffect = 'copy';
+      els.drop.classList.add('over');
+    });
+  });
+  ['dragleave', 'dragend'].forEach(function (type) {
+    document.addEventListener(type, function (e) {
+      if (e.relatedTarget) return;
+      els.drop.classList.remove('over');
+    });
+  });
+  document.addEventListener('drop', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    els.drop.classList.remove('over');
+    addFiles(e.dataTransfer.files);
+  });
+
+  document.addEventListener('paste', function (e) {
+    if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length) {
+      addFiles(e.clipboardData.files);
+    }
+  });
+
+  /* ---- dragging thumbnails to reorder ---- */
+
+  var dragFrom = -1;
+  els.thumbs.addEventListener('dragstart', function (e) {
+    var li = e.target.closest('.thumb');
+    if (!li) return;
+    dragFrom = +li.dataset.i;
+    li.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(dragFrom));   // Firefox needs some payload
+  });
+  els.thumbs.addEventListener('dragover', function (e) {
+    if (dragFrom < 0) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    var li = e.target.closest('.thumb');
+    els.thumbs.querySelectorAll('.dropbefore').forEach(function (n) { n.classList.remove('dropbefore'); });
+    if (li) li.classList.add('dropbefore');
+  });
+  els.thumbs.addEventListener('drop', function (e) {
+    if (dragFrom < 0) return;
+    e.preventDefault();
+    var li = e.target.closest('.thumb');
+    if (li) move(dragFrom, +li.dataset.i);
+    dragFrom = -1;
+  });
+  els.thumbs.addEventListener('dragend', function () {
+    dragFrom = -1;
+    els.thumbs.querySelectorAll('.dragging, .dropbefore').forEach(function (n) {
+      n.classList.remove('dragging'); n.classList.remove('dropbefore');
+    });
+  });
+
+  setFitHint();
+  syncGrid();
+  draw();
+
+  // Prefer a real history back over following the href: the browser restores the scroll position
+  // you left the index at, which a fresh navigation to "/" can't do. Only when we actually arrived
+  // from this site and there IS somewhere to go back to — a bookmark, a search hit or a new tab
+  // falls through to the href and loads the index normally.
+  document.querySelectorAll("a.back").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var sameOrigin = false;
+      try { sameOrigin = !!document.referrer && new URL(document.referrer).origin === location.origin; }
+      catch (err) { sameOrigin = false; }
+      if (sameOrigin && history.length > 1) { e.preventDefault(); history.back(); }
+    });
+  });
+</script>
+
+</body>
+</html>
